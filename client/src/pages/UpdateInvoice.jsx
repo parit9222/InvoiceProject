@@ -26,7 +26,6 @@ export default function UpdateInvoice() {
     const [popFormData, setpopFormData] = useState({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
     const [selectedRow, setSelectedRow] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
-    console.log("this for data",data);
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
 
@@ -138,7 +137,6 @@ export default function UpdateInvoice() {
     const handleDelete = async (index) => {
         const deletedItem = data[index];
         const product = productUsers.find(p => p.productsName === deletedItem.productname);
-        console.log(product);
     
         if (product) {
             const updatedQty = +product.qty + +deletedItem.qty;
@@ -213,6 +211,27 @@ export default function UpdateInvoice() {
         setpopFormData(data[index]);
     };
 
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+    //     if (selectedRow !== null) {
+    //         const newData = [...data];
+    //         newData[selectedRow] = popFormData;
+    //         setData(newData);
+    //         setSelectedRow(null);
+    //     } else {
+    //         setData([...data, popFormData]);
+    //     }
+
+    //     setFormData(prevFormData => ({
+    //         ...prevFormData,
+    //         items: [...data, popFormData],
+    //     }));
+
+    //     setpopFormData({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
+    //     handleClose();
+    // };
+
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (selectedRow !== null) {
@@ -221,40 +240,51 @@ export default function UpdateInvoice() {
             setData(newData);
             setSelectedRow(null);
         } else {
-            setData([...data, popFormData]);
+            // Check if the product already exists in the data array
+            const existingProductIndex = data.findIndex(item => item.productname === popFormData.productname);
+            if (existingProductIndex !== -1) {
+                // Update the existing product's quantity and other details
+                const updatedProduct = { ...data[existingProductIndex] };
+                updatedProduct.qty = parseInt(updatedProduct.qty) + parseInt(popFormData.qty);
+                updatedProduct.discountper = popFormData.discountper; // or any logic you want to apply for discount and amount
+                updatedProduct.discountamount = ((updatedProduct.rate * updatedProduct.qty * updatedProduct.discountper) / 100).toFixed(2);
+                updatedProduct.amount = (updatedProduct.rate * updatedProduct.qty - updatedProduct.discountamount).toFixed(2);
+    
+                const newData = [...data];
+                newData[existingProductIndex] = updatedProduct;
+                setData(newData);
+            } else {
+                setData([...data, popFormData]);
+            }
         }
-
+    
         setFormData(prevFormData => ({
             ...prevFormData,
-            items: [...data, popFormData],
+            items: data,
         }));
-
+    
         setpopFormData({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
         handleClose();
     };
+    
 
     
     
 
 
     const [oldQty, setOldQty] = useState('');
-    console.log(oldQty);
     const { id } = useParams();
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const res = await fetch(`/api/user/currentUserInvoice/${id}`);
                 const data = await res.json();
-                console.log(data);
 
                 if (data.status === 201) {
                     const user = data.data;
                     const upitems = user.items;
-                    console.log(upitems);
                     const oldProductQty = upitems.map(q => q.qty);
                     setOldQty(oldProductQty);
-                    console.log(oldProductQty);
-                    console.log(user);
                     setFormData({
                         invoiceNumber: user.invoiceNumber,
                         customerName: user.customerName,
@@ -276,6 +306,44 @@ export default function UpdateInvoice() {
 
 
 
+    // const handleInvoiceUpdate = async (e) => {
+    //     e.preventDefault();
+    //     try {
+    //         const res = await fetch(`/api/user/update/${id}`, {
+    //             method: "PUT",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({ ...formData }),
+    //         });
+    //         const Updatedata = await res.json();
+    //         if (Updatedata) {
+    //             for (const item of formData.items) {
+    //                 const product = productUsers?.find(p => p.productsName === item.productname);
+    //                 if (product) {
+    //                     const previousItem = data.find(d => d.productname === item.productname);
+    //                     const previousItemQty = previousItem ? previousItem.qty : 0;
+    //                     const updatedQty = +product.qty + +oldQty - +item.qty;
+
+    //                     await fetch(`/api/product/update/${product._id}`, {
+    //                         method: "PUT",
+    //                         headers: {
+    //                             "Content-Type": "application/json",
+    //                         },
+    //                         body: JSON.stringify({ productId: product._id, qty: updatedQty }),
+    //                     });
+    //                 }
+    //             }
+    //             setSuccessDialogOpen(true);
+    //         } else {
+    //             console.log(data.message);
+    //         }
+    //     } catch (error) {
+    //         console.error(error.message);
+    //     }
+    // };
+
+
     const handleInvoiceUpdate = async (e) => {
         e.preventDefault();
         try {
@@ -287,22 +355,14 @@ export default function UpdateInvoice() {
                 body: JSON.stringify({ ...formData }),
             });
             const Updatedata = await res.json();
-            console.log(Updatedata);
             if (Updatedata) {
                 for (const item of formData.items) {
                     const product = productUsers?.find(p => p.productsName === item.productname);
-                    console.log(product);
                     if (product) {
                         const previousItem = data.find(d => d.productname === item.productname);
-                        console.log(previousItem);
                         const previousItemQty = previousItem ? previousItem.qty : 0;
-                        console.log(previousItemQty);
-                        const updatedQty = +product.qty + +oldQty - item.qty;
-
-                        console.log(product.qty);
-                        console.log(previousItemQty);
-                        console.log(item.qty);
-                        console.log(updatedQty);
+                        const updatedQty = +product.qty + (+oldQty - +item.qty);
+    
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "PUT",
                             headers: {
@@ -321,6 +381,7 @@ export default function UpdateInvoice() {
         }
     };
     
+    
 
     
 
@@ -335,14 +396,11 @@ export default function UpdateInvoice() {
     //             body: JSON.stringify({ ...formData }),
     //         });
     //         const data = await res.json();
-    //         console.log(data);
     //         if (data) {
     //             for (const item of formData.items) {
     //                 const product = productUsers.find(p => p.productsName === item.productname);
-    //                 console.log(product);
     //                 if (product) {
     //                     const updatedQty = product.qty - item.qty;
-    //                     console.log(updatedQty);
     //                     await fetch(`/api/product/update/${product._id}`, {
     //                         method: "put",
     //                         headers: {

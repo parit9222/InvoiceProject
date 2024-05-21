@@ -37,7 +37,6 @@ export default function Invoice() {
     const [inputCustomerValue, setInputCustomerValue] = useState('');
 
 
-    console.log(popFormData);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -66,8 +65,6 @@ export default function Invoice() {
 
 
     const [productName, setProductName] = useState([]);
-    const [productQty, setProductQty] = useState([]);
-    console.log(productQty);
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -78,7 +75,6 @@ export default function Invoice() {
                 const data = await response.json();
                 const activeProductNames = data.data.map(product => product.productsName);
 
-                console.log(activeProductNames);
                 setProductName(activeProductNames);
 
                 setProductUsers(data.data);
@@ -229,10 +225,8 @@ export default function Invoice() {
             if (invoiceData) {
                 for (const item of formData.items) {
                     const product = productUsers.find(p => p.productsName === item.productname);
-                    console.log(product);
                     if (product) {
                         const updatedQty = product.qty - item.qty;
-                        console.log(updatedQty);
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "put",
                             headers: {

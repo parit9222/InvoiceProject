@@ -63,10 +63,8 @@ export default function UpdateCustomer() {
             try {
                 const res = await fetch(`/api/customer/currentUserCustomer/${id}`);
                 const data = await res.json();
-                console.log(data);
                 if (data) {
                     const user = data.data;
-                    console.log(user);
                     setFormData({
                         customerName: user.customerName,
                         customerMobileNumber: user.customerMobileNumber,

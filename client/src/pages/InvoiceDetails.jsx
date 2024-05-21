@@ -27,7 +27,6 @@ export default function InvoiceDetails() {
 
     const [productName, setProductName] = useState([]);
     const [productUsers, setProductUsers] = useState([]);
-    // const [productQty, setProductQty] = useState([]);
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -38,7 +37,6 @@ export default function InvoiceDetails() {
                 const data = await response.json();
                 const activeProductNames = data.data.map(product => product.productsName);
 
-                console.log(activeProductNames);
                 setProductName(activeProductNames);
 
                 setProductUsers(data.data);
@@ -50,21 +48,7 @@ export default function InvoiceDetails() {
     }, []);
 
 
-    // const handleDeleteData = async (id) => {
-    //     console.log(id);
-    //     try {
 
-    //         const res = await fetch(`/api/user/delete/${id}`, {
-    //             method: 'DELETE',
-    //         });
-    //         const InvoiceData = await res.json();
-
-    //         setUsers((prev) => prev.filter((user) => user._id !== id))
-
-    //     } catch (error) {
-    //         console.log(error.message);
-    //     }
-    // };
 
     const handleDeleteData = (id) => {
         setDeleteId(id);
@@ -106,14 +90,11 @@ export default function InvoiceDetails() {
             // Update product quantities
             if (deleteId && productUsers.length > 0) {
                 const deletedUser = users.find((user) => user._id === deleteId);
-                console.log(deletedUser);
                 if (deletedUser) {
                     deletedUser.items.forEach(async(item) => {
                         const productToUpdate = productUsers.find((product) => product.productName === item.productName);
-                        console.log(productToUpdate);
                         if (productToUpdate) {
                             const updatedQty = +productToUpdate.qty + +item.qty; 
-                            console.log(updatedQty);
                             try {
                                 await fetch(`/api/product/update/${productToUpdate._id}`, {
                                     method: "PUT",

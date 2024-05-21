@@ -13,7 +13,6 @@ export default function Customer() {
     gstNumber: '',
     accountStatus: '',
   });
-  console.log(formData);
 
   const [phno, setPhno] = useState('');
 
