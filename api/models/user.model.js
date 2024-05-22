@@ -34,15 +34,15 @@ const invoiceSchema = new mongoose.Schema({
             },
             amount: {
                 type: String,
-                required: true
+                // required: true
             },
             discountper: {
                 type: String,
-                required: true
+                // required: true
             },
             discountamount: {
                 type: String,
-                required: true
+                // required: true
             },
         }
     ],

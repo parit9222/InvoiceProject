@@ -227,6 +227,9 @@ export default function Invoice() {
                     const product = productUsers.find(p => p.productsName === item.productname);
                     if (product) {
                         const updatedQty = product.qty - item.qty;
+                        if (updatedQty <= 20) {
+                            toast.warn(`${product.productsName} quantity is now ${updatedQty}`);
+                        }
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "put",
                             headers: {
@@ -268,7 +271,6 @@ export default function Invoice() {
         setInputCustomerValue(option);
         setShowCustomerOptions(false);
 
-        // Find the selected customer and set their mobile number
         const selectedCustomer = users.find(customer => customer.customerName === option);
         if (selectedCustomer) {
             setFormData(prevFormData => ({

@@ -138,9 +138,8 @@ export default function UpdateInvoice() {
     const handleDelete = async (index) => {
         const deletedItem = data[index];
         const product = productUsers.find(p => p.productsName === deletedItem.productname);
-    
         if (product) {
-            const updatedQty = +product.qty + +deletedItem.qty;
+            const updatedQty = (+product.qty) + (+deletedItem.qty);
             try {
                 await fetch(`/api/product/update/${product._id}`, {
                     method: "PUT",
@@ -341,8 +340,12 @@ export default function UpdateInvoice() {
                 for (const [index, item] of formData.items.entries()) {
                     const product = productUsers.find(p => p.productsName === item.productname);
                     if (product) {
-                        const previousItemQty = oldQty[index];
+                        // const previousItemQty = oldQty[index];
+                        const previousItemQty = oldQty[index] ?? 0;
                         const updatedQty = (+product.qty) + (+previousItemQty) - (+item.qty);
+                        if (updatedQty <= 20) {
+                            toast.warn(`${product.productsName} quantity is now ${updatedQty}`);
+                        }
     
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "PUT",
