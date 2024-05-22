@@ -7,12 +7,14 @@ export const product = async(req, res, next) => {
             productsName,
             qty,
             rate,
+            productStatus,
         } = req.body;
 
         const newProduct = new Products({
             productsName,
             qty,
             rate,
+            productStatus,
         });
 
         const userProducts = await newProduct.save();
@@ -77,6 +79,7 @@ export const updateProduct = async(req, res, next) => {
                     productsName: req.body.productsName,
                     qty: req.body.qty,
                     rate: req.body.rate,
+                    productStatus: req.body.productStatus,
                 },
             },
             { new: true },

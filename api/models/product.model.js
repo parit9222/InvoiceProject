@@ -13,6 +13,11 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    productStatus: {
+        type: String,
+        required: true,
+    },
+
 }, { timestamps: true });
 
 const product = mongoose.model('Product', productSchema);

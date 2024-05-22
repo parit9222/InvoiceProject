@@ -9,7 +9,9 @@ export default function Products() {
     productsName: '',
     qty: '',
     rate: '',
+    productStatus: '',
   });
+  console.log(formData);
 
 
   const navigate = useNavigate();
@@ -26,6 +28,13 @@ export default function Products() {
         ...formData,
         [e.target.id]: e.target.value,
       });
+    }
+
+    if (e.target.id === 'active' || e.target.id === 'notactive') {
+      setFormData({
+        ...formData,
+        productStatus: e.target.id,
+      })
     }
 
   }
@@ -102,6 +111,38 @@ export default function Products() {
             onChange={handleFetchData}
             placeholder='Rate'
           />
+
+        </div>
+
+        <div className='flex gap-10 mt-6 flex-wrap'>
+
+          <span className='mx-6 text-slate-600'>Product-Status  : </span>
+
+          <div className='flex gap-2'>
+            <input
+              type="radio"
+              value="active"
+              className='w-5'
+              id='active'
+              name='accountstatus'
+              onChange={handleFetchData}
+            />
+
+            <span className='text-slate-600'>Active</span>
+          </div>
+
+          <div className='flex gap-2'>
+            <input
+              type="radio"
+              value="notactive"
+              className='w-5'
+              id='notactive'
+              name='accountstatus'
+              onChange={handleFetchData}
+            />
+
+            <span className='text-slate-600'>Not-Active</span>
+          </div>
 
         </div>
 

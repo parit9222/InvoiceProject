@@ -84,7 +84,7 @@ export default function Customer() {
 
   const successpop = () => {
     setSuccessDialogOpen(false);
-    navigate('/customerDetails');
+    navigate('/invoice');
   }
 
   const prevent = (e) => {

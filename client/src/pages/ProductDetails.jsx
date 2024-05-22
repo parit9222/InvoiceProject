@@ -100,6 +100,7 @@ export default function ProductDetails() {
             <th className="border px-4 py-2">Products Name</th>
             <th className="border px-4 py-2">Quantity</th>
             <th className="border px-4 py-2">Rate</th>
+            <th className="border px-4 py-2">Product-Status</th>
           </tr>
         </thead>
         <tbody>
@@ -108,6 +109,7 @@ export default function ProductDetails() {
               <td className="border text-center px-4 py-2">{user.productsName}</td>
               <td className="border text-center px-4 py-2">{user.qty}</td>
               <td className="border text-center px-4 py-2">{user.rate}</td>
+              <td className="border text-center px-4 py-2">{user.productStatus}</td>
               <td>
                 <Link to={`/updateProduct/${user._id}`}>
                   <button className="text-green-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>

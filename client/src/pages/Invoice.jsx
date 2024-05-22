@@ -3,7 +3,7 @@ import Input from '@mui/material/Input';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
@@ -24,7 +24,8 @@ export default function Invoice() {
     const [data, setData] = useState([]);
     const [popFormData, setpopFormData] = useState({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
     const [selectedRow, setSelectedRow] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(null);
+    const today = new Date();
+    const [selectedDate, setSelectedDate] = useState(today);
     const navigate = useNavigate();
 
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -66,24 +67,27 @@ export default function Invoice() {
 
     const [productName, setProductName] = useState([]);
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchProducts = async () => {
             try {
                 const response = await fetch('/api/product/details');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch users');
+                    throw new Error('Failed to fetch products');
                 }
                 const data = await response.json();
-                const activeProductNames = data.data.map(product => product.productsName);
-
+    
+                const activeProductNames = data.data
+                    .filter(product => product.productStatus === 'active') 
+                    .map(product => product.productsName);
+    
                 setProductName(activeProductNames);
-
                 setProductUsers(data.data);
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('Error fetching products:', error);
             }
         };
-        fetchUsers();
+        fetchProducts();
     }, []);
+    
 
 
 
@@ -179,10 +183,17 @@ export default function Invoice() {
         const formattedDate = format(date, 'dd-MM-yyyy');
         setSelectedDate(date);
         setFormData(prevFormData => ({
-            ...prevFormData,
-            purchaseDate: formattedDate,
+          ...prevFormData,
+          purchaseDate: formattedDate,
         }));
-    };
+      };
+      if (formData.purchaseDate === '') {
+        const formattedToday = format(today, 'dd-MM-yyyy');
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          purchaseDate: formattedToday,
+        }));
+      }
 
     const handleUpdate = (index) => {
         setOpen(true);
@@ -299,6 +310,11 @@ export default function Invoice() {
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
                     <span className='text-slate-700 text-lg'>Invoice No:</span>
                     <Input type='text' onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='invoiceNumber' placeholder='Invoice Number' />
+                </div>
+                <div className='flex flex-col gap-4 flex-1 mt-5'>
+                    <Link to={'/customer'}>
+                    <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add New Customer</button>
+                    </Link>
                 </div>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
                     <Input
