@@ -53,6 +53,7 @@ export default function UpdateInvoice() {
 
     const [productName, setProductName] = useState([]);
     const [productUsers, setProductUsers] = useState([]);
+    console.log(productUsers);
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -211,27 +212,6 @@ export default function UpdateInvoice() {
         setpopFormData(data[index]);
     };
 
-    // const handleSubmit = (e) => {
-    //     e.preventDefault();
-    //     if (selectedRow !== null) {
-    //         const newData = [...data];
-    //         newData[selectedRow] = popFormData;
-    //         setData(newData);
-    //         setSelectedRow(null);
-    //     } else {
-    //         setData([...data, popFormData]);
-    //     }
-
-    //     setFormData(prevFormData => ({
-    //         ...prevFormData,
-    //         items: [...data, popFormData],
-    //     }));
-
-    //     setpopFormData({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
-    //     handleClose();
-    // };
-
-
     const handleSubmit = (e) => {
         e.preventDefault();
         if (selectedRow !== null) {
@@ -240,32 +220,18 @@ export default function UpdateInvoice() {
             setData(newData);
             setSelectedRow(null);
         } else {
-            // Check if the product already exists in the data array
-            const existingProductIndex = data.findIndex(item => item.productname === popFormData.productname);
-            if (existingProductIndex !== -1) {
-                // Update the existing product's quantity and other details
-                const updatedProduct = { ...data[existingProductIndex] };
-                updatedProduct.qty = parseInt(updatedProduct.qty) + parseInt(popFormData.qty);
-                updatedProduct.discountper = popFormData.discountper; // or any logic you want to apply for discount and amount
-                updatedProduct.discountamount = ((updatedProduct.rate * updatedProduct.qty * updatedProduct.discountper) / 100).toFixed(2);
-                updatedProduct.amount = (updatedProduct.rate * updatedProduct.qty - updatedProduct.discountamount).toFixed(2);
-    
-                const newData = [...data];
-                newData[existingProductIndex] = updatedProduct;
-                setData(newData);
-            } else {
-                setData([...data, popFormData]);
-            }
+            setData([...data, popFormData]);
         }
-    
+
         setFormData(prevFormData => ({
             ...prevFormData,
-            items: data,
+            items: [...data, popFormData],
         }));
-    
+
         setpopFormData({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
         handleClose();
     };
+
     
 
     
@@ -273,6 +239,7 @@ export default function UpdateInvoice() {
 
 
     const [oldQty, setOldQty] = useState('');
+    console.log(oldQty);
     const { id } = useParams();
     useEffect(() => {
         const fetchData = async () => {
@@ -284,6 +251,7 @@ export default function UpdateInvoice() {
                     const user = data.data;
                     const upitems = user.items;
                     const oldProductQty = upitems.map(q => q.qty);
+                    console.log(oldProductQty);
                     setOldQty(oldProductQty);
                     setFormData({
                         invoiceNumber: user.invoiceNumber,
@@ -307,7 +275,7 @@ export default function UpdateInvoice() {
 
 
     // const handleInvoiceUpdate = async (e) => {
-    //     e.preventDefault();
+    //     e.preventDefault(); 
     //     try {
     //         const res = await fetch(`/api/user/update/${id}`, {
     //             method: "PUT",
@@ -317,13 +285,26 @@ export default function UpdateInvoice() {
     //             body: JSON.stringify({ ...formData }),
     //         });
     //         const Updatedata = await res.json();
+
     //         if (Updatedata) {
+
     //             for (const item of formData.items) {
-    //                 const product = productUsers?.find(p => p.productsName === item.productname);
+
+    //                 console.log(item);
+
+    //                 const product = productUsers.find(p => p.productsName === item.productname);
+    //                     console.log(product);
+
     //                 if (product) {
     //                     const previousItem = data.find(d => d.productname === item.productname);
+    //                         console.log(previousItem);
     //                     const previousItemQty = previousItem ? previousItem.qty : 0;
-    //                     const updatedQty = +product.qty + +oldQty - +item.qty;
+    //                     // const updatedQty = +product.qty + +previousItemQty - +item.qty;
+    //                     const updatedQty = (+product.qty) + (+oldQty) - (+item.qty);
+    //                     console.log(updatedQty);
+    //                     console.log(+product.qty);
+    //                     console.log(+oldQty);
+    //                     console.log(+item.qty);
 
     //                     await fetch(`/api/product/update/${product._id}`, {
     //                         method: "PUT",
@@ -355,13 +336,13 @@ export default function UpdateInvoice() {
                 body: JSON.stringify({ ...formData }),
             });
             const Updatedata = await res.json();
+    
             if (Updatedata) {
-                for (const item of formData.items) {
-                    const product = productUsers?.find(p => p.productsName === item.productname);
+                for (const [index, item] of formData.items.entries()) {
+                    const product = productUsers.find(p => p.productsName === item.productname);
                     if (product) {
-                        const previousItem = data.find(d => d.productname === item.productname);
-                        const previousItemQty = previousItem ? previousItem.qty : 0;
-                        const updatedQty = +product.qty + (+oldQty - +item.qty);
+                        const previousItemQty = oldQty[index];
+                        const updatedQty = (+product.qty) + (+previousItemQty) - (+item.qty);
     
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "PUT",
@@ -381,9 +362,8 @@ export default function UpdateInvoice() {
         }
     };
     
-    
 
-    
+
 
     // const handleInvoiceUpdate = async (e) => {
     //     e.preventDefault();
@@ -396,13 +376,21 @@ export default function UpdateInvoice() {
     //             body: JSON.stringify({ ...formData }),
     //         });
     //         const data = await res.json();
+    //         console.log(data);
     //         if (data) {
     //             for (const item of formData.items) {
+    //                 console.log(item);
     //                 const product = productUsers.find(p => p.productsName === item.productname);
+    //                 // console.log(p.productsName === item.productname);
+    //                 console.log(product);
     //                 if (product) {
-    //                     const updatedQty = product.qty - item.qty;
+    //                     console.log(product);
+    //                     const previousItem = data.data.items.find(d => d.productname === item.productname);
+    //                     const previousItemQty = previousItem ? previousItem.qty : 0;
+    //                     const updatedQty = (+product.qty) + (+previousItemQty) - (+item.qty);
+    //                     console.log(updatedQty);
     //                     await fetch(`/api/product/update/${product._id}`, {
-    //                         method: "put",
+    //                         method: "PUT",
     //                         headers: {
     //                             "Content-Type": "application/json",
     //                         },
@@ -411,19 +399,59 @@ export default function UpdateInvoice() {
     //                 }
     //             }
     //             setSuccessDialogOpen(true);
-    //         }
-    //         // if (data.status === 201) {
-    //         //     setSuccessDialogOpen(true);
-    //         //     return;
-    //         // } 
-    //         else {
+    //         } else {
     //             console.log(data.message);
     //         }
     //     } catch (error) {
     //         console.error(error.message);
     //     }
     // };
+    
 
+
+    // const handleInvoiceUpdate = async (e) => {
+    //     e.preventDefault();
+    //     try {
+    //         const res = await fetch(`/api/user/update/${id}`, {
+    //             method: "PUT",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({ ...formData }),
+    //         });
+    //         const Updatedata = await res.json();
+    //         if (Updatedata) {
+    //             for (const item of formData.items) {
+    //                 const product = productUsers?.find(p => p.productsName === item.productname);
+    //                 if (product) {
+    //                     const previousItem = data.find(d => d.productname === item.productname);
+    //                     const previousItemQty = previousItem ? previousItem.qty : 0;
+    //                     const updatedQty = +product.qty + (+oldQty - +item.qty);
+    //                     // const updatedQty = +product.qty - +item.qty;
+    
+    //                     await fetch(`/api/product/update/${product._id}`, {
+    //                         method: "PUT",
+    //                         headers: {
+    //                             "Content-Type": "application/json",
+    //                         },
+    //                         body: JSON.stringify({ productId: product._id, qty: updatedQty }),
+    //                     });
+    //                 }
+    //             }
+    //             setSuccessDialogOpen(true);
+    //         } else {
+    //             console.log(data.message);
+    //         }
+    //     } catch (error) {
+    //         console.error(error.message);
+    //     }
+    // };
+    
+    
+
+    
+
+    
     const successpop = () => {
         setSuccessDialogOpen(false);
         navigate('/');

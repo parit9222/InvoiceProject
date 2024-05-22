@@ -84,26 +84,27 @@ export default function InvoiceDetails() {
             if (!res.ok) {
                 throw new Error('Failed to delete record');
             }
-            // Update state after successful deletion
             setUsers((prev) => prev.filter((user) => user._id !== deleteId));
     
-            // Update product quantities
             if (deleteId && productUsers.length > 0) {
                 const deletedUser = users.find((user) => user._id === deleteId);
                 if (deletedUser) {
                     deletedUser.items.forEach(async(item) => {
-                        const productToUpdate = productUsers.find((product) => product.productName === item.productName);
+                        // console.log(item);
+                        const productToUpdate = productUsers.find((product) => product.productsName === item.productname);
+                        // console.log(productToUpdate);
                         if (productToUpdate) {
-                            const updatedQty = +productToUpdate.qty + +item.qty; 
+                            const updatedQty = (+productToUpdate.qty) + (+item.qty); 
                             try {
-                                await fetch(`/api/product/update/${productToUpdate._id}`, {
+                                const res = await fetch(`/api/product/update/${productToUpdate._id}`, {
                                     method: "PUT",
                                     headers: {
                                         "Content-Type": "application/json",
                                     },
                                     body: JSON.stringify({ productId: productToUpdate._id, qty: updatedQty }),
                                 });
-                    
+                                const updateqty = await res.json();
+                                console.log(updateqty);
                     
                             } catch (error) {
                                 console.error('Error updating product quantity:', error);

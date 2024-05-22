@@ -19,10 +19,7 @@ const invoiceSchema = new mongoose.Schema({
     },
     items: [
         {
-            productId: {
-                type: mongoose.Types.ObjectId,
-                ref: 'Product',
-            },
+
             productname: {
                 type: String,
                 required: true
