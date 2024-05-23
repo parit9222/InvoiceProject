@@ -23,8 +23,15 @@ export default function UpdateInvoice() {
     const [phno, setPhno] = useState('');
     const [open, setOpen] = useState(false);
     const [data, setData] = useState([]);
-    const [popFormData, setpopFormData] = useState({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
-    const [selectedRow, setSelectedRow] = useState(null);
+    const [popFormData, setpopFormData] = useState({
+        productId: '',
+        productname: '',
+        qty: '',
+        rate: '',
+        discountper: '',
+        discountamount: '',
+        amount: ''
+    }); const [selectedRow, setSelectedRow] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
@@ -62,13 +69,13 @@ export default function UpdateInvoice() {
                     throw new Error('Failed to fetch products');
                 }
                 const data = await response.json();
-    
-                const activeProductNames = data.data
-                    .filter(product => product.productStatus === 'active') 
-                    .map(product => product.productsName);
-    
-                setProductName(activeProductNames);
-                setProductUsers(data.data);
+
+                // Filter active products
+                const activeProducts = data.data.filter(product => product.productStatus === 'active');
+
+                // Store only active products in productUsers
+                setProductUsers(activeProducts);
+                setProductName(activeProducts.map(product => product.productsName));
             } catch (error) {
                 console.error('Error fetching products:', error);
             }
@@ -77,15 +84,43 @@ export default function UpdateInvoice() {
     }, []);
 
 
-    const handleInputChange = (e) => {
+
+    // const handleInputChange = (e) => {
+    //     const { id, value } = e.target;
+    //     if (id === 'productname') {
+    //         const selectedProduct = productUsers.find(product => product.productsName === value);
+    //         setpopFormData(prevData => ({
+    //             ...prevData,
+    //             [id]: value,
+    //             rate: selectedProduct ? selectedProduct.rate : '', 
+    //         }));
+    //     } else {
+    //         setpopFormData(prevData => {
+    //             const newData = {
+    //                 ...prevData,
+    //                 [id]: value,
+    //             };
+    //             const discountAmount = (newData.rate * newData.qty * newData.discountper) / 100;
+    //             newData.discountamount = discountAmount.toFixed(2);
+    //             newData.amount = (newData.rate * newData.qty) - discountAmount;
+    //             return newData;
+    //         });
+    //     }
+    // };
+
+    const handleInputChange = (e, products) => {
         const { id, value } = e.target;
+
         if (id === 'productname') {
-            const selectedProduct = productUsers.find(product => product.productsName === value);
-            setpopFormData(prevData => ({
-                ...prevData,
-                [id]: value,
-                rate: selectedProduct ? selectedProduct.rate : '', 
-            }));
+            const selectedProduct = productUsers.find(product => product._id === value);
+            if (selectedProduct) {
+                setpopFormData(prevData => ({
+                    ...prevData,
+                    productId: selectedProduct._id,
+                    productname: selectedProduct.productsName,
+                    rate: selectedProduct.rate,
+                }));
+            }
         } else {
             setpopFormData(prevData => {
                 const newData = {
@@ -99,44 +134,16 @@ export default function UpdateInvoice() {
             });
         }
     };
-       
 
 
 
-
-    // const handleInputChange = (e) => {
-    //     const { id, value } = e.target;
-    //     setpopFormData(prevData => {
-    //         const newData = {
-    //             ...prevData,
-    //             [id]: value,
-    //         };
-    //         const discountAmount = (newData.rate * newData.qty * newData.discountper) / 100;
-    //         newData.discountamount = discountAmount.toFixed(2);
-    //         newData.amount = (newData.rate * newData.qty) - discountAmount;
-    //         return newData;
-    //     });
-    // };
-
-
-
-
-    
-    // const handleDelete = (index) => {
-    //     const newData = [...data];
-    //     newData.splice(index, 1);
-    //     setData(newData);
-    //     setFormData(prevFormData => ({
-    //         ...prevFormData,
-    //         items: newData
-    //     }));
-    // };
 
 
 
     const handleDelete = async (index) => {
         const deletedItem = data[index];
-        const product = productUsers.find(p => p.productsName === deletedItem.productname);
+        const product = productUsers.find(p => p._id === deletedItem.productId);
+        console.log(product);
         if (product) {
             const updatedQty = (+product.qty) + (+deletedItem.qty);
             try {
@@ -147,7 +154,7 @@ export default function UpdateInvoice() {
                     },
                     body: JSON.stringify({ productId: product._id, qty: updatedQty }),
                 });
-    
+
                 const newData = [...data];
                 newData.splice(index, 1);
                 setData(newData);
@@ -157,7 +164,7 @@ export default function UpdateInvoice() {
                     totalDiscount: newData.reduce((acc, item) => acc + parseFloat(item.discountamount || 0), 0).toFixed(2),
                     totalAmount: calculateTotalAmount(newData).toFixed(2)
                 }));
-    
+
                 toast.success('Product deleted and quantity updated successfully!');
             } catch (error) {
                 console.error('Error updating product quantity:', error);
@@ -165,9 +172,9 @@ export default function UpdateInvoice() {
         }
     };
 
-    
-    
-    
+
+
+
 
 
     const calculateTotalAmount = () => {
@@ -177,7 +184,7 @@ export default function UpdateInvoice() {
     const handlePhnoBlur = () => {
         if (phno.length < 10) {
             toast.error("Phone number must be 10 digits");
-        } 
+        }
     };
 
     const handleNumberChange = (e) => {
@@ -230,10 +237,10 @@ export default function UpdateInvoice() {
         handleClose();
     };
 
-    
 
-    
-    
+
+
+
 
 
     const [oldQty, setOldQty] = useState('');
@@ -334,10 +341,11 @@ export default function UpdateInvoice() {
                 body: JSON.stringify({ ...formData }),
             });
             const Updatedata = await res.json();
-    
+
             if (Updatedata) {
                 for (const [index, item] of formData.items.entries()) {
-                    const product = productUsers.find(p => p.productsName === item.productname);
+                    const product = productUsers.find(p => p._id === item.productId);
+                    console.log(product);
                     if (product) {
                         // const previousItemQty = oldQty[index];
                         const previousItemQty = oldQty[index] ?? 0;
@@ -345,7 +353,7 @@ export default function UpdateInvoice() {
                         if (updatedQty <= 20) {
                             toast.warn(`${product.productsName} quantity is now ${updatedQty}`);
                         }
-    
+
                         await fetch(`/api/product/update/${product._id}`, {
                             method: "PUT",
                             headers: {
@@ -363,7 +371,7 @@ export default function UpdateInvoice() {
             console.error(error.message);
         }
     };
-    
+
 
 
 
@@ -408,7 +416,7 @@ export default function UpdateInvoice() {
     //         console.error(error.message);
     //     }
     // };
-    
+
 
 
     // const handleInvoiceUpdate = async (e) => {
@@ -430,7 +438,7 @@ export default function UpdateInvoice() {
     //                     const previousItemQty = previousItem ? previousItem.qty : 0;
     //                     const updatedQty = +product.qty + (+oldQty - +item.qty);
     //                     // const updatedQty = +product.qty - +item.qty;
-    
+
     //                     await fetch(`/api/product/update/${product._id}`, {
     //                         method: "PUT",
     //                         headers: {
@@ -448,12 +456,12 @@ export default function UpdateInvoice() {
     //         console.error(error.message);
     //     }
     // };
-    
-    
 
-    
 
-    
+
+
+
+
     const successpop = () => {
         setSuccessDialogOpen(false);
         navigate('/');
@@ -471,7 +479,7 @@ export default function UpdateInvoice() {
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
                     <Input type='text' value={formData.invoiceNumber} onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='invoiceNumber' placeholder='Invoice Number' />
                 </div>
-                
+
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
                     <Input type='text' value={formData.customerName} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='customerName' onChange={handleFetchData} placeholder='Customer Name' />
                 </div>
@@ -507,7 +515,7 @@ export default function UpdateInvoice() {
                         <DialogContent>
                             <div className='flex flex-col gap-4 flex-1 mt-5'>
                                 {/* <Input type='text' className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='productname' placeholder='Products Name' onChange={handleInputChange} value={popFormData.productname} /> */}
-                                <select id="productname"  onChange={handleInputChange} value={popFormData.productname} className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400">
+                                {/* <select id="productname"  onChange={handleInputChange} value={popFormData.productname} className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400">
                                     <option selected>Products Name</option>
                                     {productName.map((option, index) => (
                                         <option
@@ -517,7 +525,26 @@ export default function UpdateInvoice() {
                                             {option}
                                         </option>
                                     ))}
+                                </select> */}
+
+                                <select
+                                    id="productname"
+                                    onChange={(e) => handleInputChange(e, productUsers)}
+                                    value={popFormData.productId}
+                                    className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400"
+                                >
+                                    <option value="" disabled>Select Product</option>
+                                    {productUsers.map((option) => (
+                                        <option
+                                            key={option._id}
+                                            value={option._id}
+                                        >
+                                            {option.productsName}
+                                        </option>
+                                    ))}
                                 </select>
+
+
                             </div>
                             <div className='flex gap-4 flex-1 mt-5'>
                                 <Input type='number' className='w-60 p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='qty' placeholder='Qty' onChange={handleInputChange} value={popFormData.qty} />

@@ -76,6 +76,52 @@ export default function InvoiceDetails() {
 
 
 
+    // const handleConfirmDelete = async () => {
+    //     try {
+    //         const res = await fetch(`/api/user/delete/${deleteId}`, {
+    //             method: 'DELETE',
+    //         });
+    //         if (!res.ok) {
+    //             throw new Error('Failed to delete record');
+    //         }
+    //         setUsers((prev) => prev.filter((user) => user._id !== deleteId));
+    
+    //         if (deleteId && productUsers.length > 0) {
+    //             const deletedUser = users.find((user) => user._id === deleteId);
+    //             if (deletedUser) {
+    //                 deletedUser.items.forEach(async(item) => {
+    //                     // console.log(item);
+    //                     const productToUpdate = productUsers.find((product) => {product._id === item.productId});
+    //                     console.log(productToUpdate);
+    //                     if (productToUpdate) {
+    //                         const updatedQty = (+productToUpdate.qty) + (+item.qty); 
+    //                         try {
+    //                             const res = await fetch(`/api/product/update/${productToUpdate._id}`, {
+    //                                 method: "PUT",
+    //                                 headers: {
+    //                                     "Content-Type": "application/json",
+    //                                 },
+    //                                 body: JSON.stringify({ productId: productToUpdate._id, qty: updatedQty }),
+    //                             });
+    //                             const updateqty = await res.json();
+    //                             console.log(updateqty);
+                    
+    //                         } catch (error) {
+    //                             console.error('Error updating product quantity:', error);
+    //                         }
+    //                     }
+    //                 });
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.log('Error deleting record:', error.message);
+    //     } finally {
+    //         // Reset state
+    //         setOpenDeleteDialog(false);
+    //         setDeleteId(null);
+    //     }
+    // };
+
     const handleConfirmDelete = async () => {
         try {
             const res = await fetch(`/api/user/delete/${deleteId}`, {
@@ -89,12 +135,11 @@ export default function InvoiceDetails() {
             if (deleteId && productUsers.length > 0) {
                 const deletedUser = users.find((user) => user._id === deleteId);
                 if (deletedUser) {
-                    deletedUser.items.forEach(async(item) => {
-                        // console.log(item);
-                        const productToUpdate = productUsers.find((product) => product.productsName === item.productname);
-                        // console.log(productToUpdate);
+                    deletedUser.items.forEach(async (item) => {
+                        const productToUpdate = productUsers.find((product) => product._id === item.productId);
+                        console.log(productToUpdate);
                         if (productToUpdate) {
-                            const updatedQty = (+productToUpdate.qty) + (+item.qty); 
+                            const updatedQty = (+productToUpdate.qty) + (+item.qty);
                             try {
                                 const res = await fetch(`/api/product/update/${productToUpdate._id}`, {
                                     method: "PUT",
@@ -105,7 +150,6 @@ export default function InvoiceDetails() {
                                 });
                                 const updateqty = await res.json();
                                 console.log(updateqty);
-                    
                             } catch (error) {
                                 console.error('Error updating product quantity:', error);
                             }
@@ -121,8 +165,7 @@ export default function InvoiceDetails() {
             setDeleteId(null);
         }
     };
-
-
+    
     const handleCancelDelete = () => {
         setOpenDeleteDialog(false);
         setDeleteId(null);

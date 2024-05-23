@@ -22,13 +22,14 @@ export default function Invoice() {
     const [phno, setPhno] = useState('');
     const [open, setOpen] = useState(false);
     const [data, setData] = useState([]);
-    const [popFormData, setpopFormData] = useState({ 
-        productname: '', 
-        qty: '', 
-        rate: '', 
-        discountper: '', 
-        discountamount: '', 
-        amount: '' 
+    const [popFormData, setpopFormData] = useState({
+        productId: '',
+        productname: '',
+        qty: '',
+        rate: '',
+        discountper: '',
+        discountamount: '',
+        amount: ''
     });
     const [selectedRow, setSelectedRow] = useState(null);
     const today = new Date();
@@ -68,23 +69,24 @@ export default function Invoice() {
     }, []);
 
     const [productName, setProductName] = useState([]);
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const response = await fetch('/api/product/details');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch products');
-                }
-                const data = await response.json();
-                const activeProductNames = data.data
-                    .filter(product => product.productStatus === 'active') 
-                    .map(product => product.productsName);
-                setProductName(activeProductNames);
-                setProductUsers(data.data);
-            } catch (error) {
-                console.error('Error fetching products:', error);
+    const fetchProducts = async () => {
+        try {
+            const response = await fetch('/api/product/details');
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
             }
-        };
+            const data = await response.json();
+            const activeProductNames = data.data
+                .filter(product => product.productStatus === 'active')
+                .map(product => product);
+            setProductName(activeProductNames);
+            setProductUsers(data.data);
+            console.log(activeProductNames);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    };
+    useEffect(() => {
         fetchProducts();
     }, []);
 
@@ -108,15 +110,48 @@ export default function Invoice() {
     };
 
 
-    const handleInputChange = (e) => {
+    // const handleInputChange = (e, item) => {
+    //     // debugger
+    //     console.log(item);
+    //     const proDataPname = item.map(p => p.productsName);
+    //     const proDataId = item.map(p => p._id);
+    //     console.log(proDataObj);
+    //     const { id, value } = e.target;
+    //     if (id === 'productname') {
+    //         const selectedProduct = productUsers.find(product => { product._id === value._id });
+    //         setpopFormData(prevData => ({
+    //             ...prevData,
+    //             [id]: value,
+    //             rate: selectedProduct ? selectedProduct.rate : '', // Set rate based on selected product
+    //         }));
+    //     } else {
+    //         setpopFormData(prevData => {
+    //             const newData = {
+    //                 ...prevData,
+    //                 [id]: value,
+    //             };
+    //             const discountAmount = (newData.rate * newData.qty * newData.discountper) / 100;
+    //             newData.discountamount = discountAmount.toFixed(2);
+    //             newData.amount = (newData.rate * newData.qty) - discountAmount;
+    //             return newData;
+    //         });
+    //     }
+    // };
+
+
+    const handleInputChange = (e, products) => {
         const { id, value } = e.target;
+    
         if (id === 'productname') {
-            const selectedProduct = productUsers.find(product => product.productsName === value);
-            setpopFormData(prevData => ({
-                ...prevData,
-                [id]: value,
-                rate: selectedProduct ? selectedProduct.rate : '', // Set rate based on selected product
-            }));
+            const selectedProduct = products.find(product => product._id === value);
+            if (selectedProduct) {
+                setpopFormData(prevData => ({
+                    ...prevData,
+                    productId: selectedProduct._id,
+                    productname: selectedProduct.productsName,
+                    rate: selectedProduct.rate,
+                }));
+            }
         } else {
             setpopFormData(prevData => {
                 const newData = {
@@ -131,9 +166,9 @@ export default function Invoice() {
         }
     };
     
-    
-    
-    
+
+
+
 
     const handleDelete = (index) => {
         const newData = [...data];
@@ -174,17 +209,17 @@ export default function Invoice() {
         const formattedDate = format(date, 'dd-MM-yyyy');
         setSelectedDate(date);
         setFormData(prevFormData => ({
-          ...prevFormData,
-          purchaseDate: formattedDate,
+            ...prevFormData,
+            purchaseDate: formattedDate,
         }));
-      };
-      if (formData.purchaseDate === '') {
+    };
+    if (formData.purchaseDate === '') {
         const formattedToday = format(today, 'dd-MM-yyyy');
         setFormData(prevFormData => ({
-          ...prevFormData,
-          purchaseDate: formattedToday,
+            ...prevFormData,
+            purchaseDate: formattedToday,
         }));
-      }
+    }
 
     const handleUpdate = (index) => {
         setOpen(true);
@@ -226,7 +261,8 @@ export default function Invoice() {
 
             if (invoiceData) {
                 for (const item of formData.items) {
-                    const product = productUsers.find(p => p.productsName === item.productname);
+                    const product = productUsers.find(p => p._id === item.productId);
+                    console.log(product);
                     if (product) {
                         const updatedQty = product.qty - item.qty;
                         if (updatedQty <= 20) {
@@ -252,8 +288,8 @@ export default function Invoice() {
         }
     };
 
-    
-    
+
+
 
     const successpop = () => {
         setSuccessDialogOpen(false);
@@ -303,7 +339,7 @@ export default function Invoice() {
                 </div>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
                     <Link to={'/customer'}>
-                    <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add New Customer</button>
+                        <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add New Customer</button>
                     </Link>
                 </div>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
@@ -366,17 +402,37 @@ export default function Invoice() {
                         <DialogContent>
                             <div className='flex flex-col gap-4 flex-1 mt-5'>
                                 {/* <Input type='text' className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='productname' placeholder='Products Name' onChange={handleInputChange} value={popFormData.productname} /> */}
-                                <select id="productname"  onChange={handleInputChange} value={popFormData.productname} className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400">
+                                {/* <select id="productname"  onChange={(e) => handleInputChange(e, productName)} value={popFormData} className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400">
                                     <option selected>Products Name</option>
-                                    {productName.map((option, index) => (
+                                    {productName.map((option, index) => {
+                                        console.log(option);
+                                        return(
                                         <option
                                             key={index}
                                             className="border px-4 py-2 cursor-pointer hover:bg-gray-200"
+                                            value={option._id}
                                         >
-                                            {option}
+                                            {option.productsName}
+                                        </option>
+                                    )})}
+                                </select> */}
+                                <select
+                                    id="productname"
+                                    onChange={(e) => handleInputChange(e, productName)}
+                                    value={popFormData.productId}
+                                    className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400"
+                                >
+                                    <option value="" disabled>Select Product</option>
+                                    {productName.map((option) => (
+                                        <option
+                                            key={option._id}
+                                            value={option._id}
+                                        >
+                                            {option.productsName}
                                         </option>
                                     ))}
                                 </select>
+
                             </div>
                             <div className='flex gap-4 flex-1 mt-5'>
                                 <Input type='number' className='w-60 p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='qty' placeholder='Qty' onChange={handleInputChange} value={popFormData.qty} />

@@ -15,6 +15,7 @@ export const invoice = async (req, res, next) => {
         } = req.body;
 
         const itemObjects = itemData.map(item => ({
+            productId: item.productId,
             productname: item.productname,
             qty: item.qty,
             rate: item.rate,
