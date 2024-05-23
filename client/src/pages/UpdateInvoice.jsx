@@ -469,7 +469,6 @@ export default function UpdateInvoice() {
             <h1 className='text-3xl text-center font-semibold my-2'>Invoice</h1>
             <form onSubmit={prevent}>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <span className='text-slate-700 text-lg'>Invoice No:</span>
                     <Input type='text' value={formData.invoiceNumber} onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='invoiceNumber' placeholder='Invoice Number' />
                 </div>
                 

@@ -22,7 +22,14 @@ export default function Invoice() {
     const [phno, setPhno] = useState('');
     const [open, setOpen] = useState(false);
     const [data, setData] = useState([]);
-    const [popFormData, setpopFormData] = useState({ productname: '', qty: '', rate: '', discountper: '', discountamount: '', amount: '' });
+    const [popFormData, setpopFormData] = useState({ 
+        productname: '', 
+        qty: '', 
+        rate: '', 
+        discountper: '', 
+        discountamount: '', 
+        amount: '' 
+    });
     const [selectedRow, setSelectedRow] = useState(null);
     const today = new Date();
     const [selectedDate, setSelectedDate] = useState(today);
@@ -47,11 +54,9 @@ export default function Invoice() {
                     throw new Error('Failed to fetch users');
                 }
                 const data = await response.json();
-
                 const activeCustomers = data.data.filter(customer => customer.accountStatus === 'active');
                 const activeCustomerNames = activeCustomers.map(customer => customer.customerName);
                 const activeCustomerMobileNumbers = activeCustomers.map(customer => customer.customerMobileNumber);
-
                 setUsers(activeCustomers);
                 setCustomerName(activeCustomerNames);
                 setCustomerMobileNumber(activeCustomerMobileNumbers);
@@ -62,9 +67,6 @@ export default function Invoice() {
         fetchUsers();
     }, []);
 
-
-
-
     const [productName, setProductName] = useState([]);
     useEffect(() => {
         const fetchProducts = async () => {
@@ -74,11 +76,9 @@ export default function Invoice() {
                     throw new Error('Failed to fetch products');
                 }
                 const data = await response.json();
-    
                 const activeProductNames = data.data
                     .filter(product => product.productStatus === 'active') 
                     .map(product => product.productsName);
-    
                 setProductName(activeProductNames);
                 setProductUsers(data.data);
             } catch (error) {
@@ -87,15 +87,6 @@ export default function Invoice() {
         };
         fetchProducts();
     }, []);
-    
-
-
-
-
-
-
-
-
 
 
     useEffect(() => {
@@ -305,10 +296,9 @@ export default function Invoice() {
 
     return (
         <div className='p-3 max-w-lg mx-auto'>
-            <h1 className='text-3xl text-center font-semibold my-2'>Invoice</h1>
-            <form onSubmit={prevent}>
+            <h1 className='text-3xl text-center font-semibold mt-10 my-2'>Invoice</h1>
+            <form className='mt-8' onSubmit={prevent}>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <span className='text-slate-700 text-lg'>Invoice No:</span>
                     <Input type='text' onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='invoiceNumber' placeholder='Invoice Number' />
                 </div>
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
