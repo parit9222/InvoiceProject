@@ -10,6 +10,10 @@ import CustomerDetails from './pages/CustomerDetails.jsx';
 import UpdateCustomer from './pages/UpdateCustomer.jsx';
 import ProductDetails from './pages/ProductDetails.jsx';
 import UpdateProduct from './pages/UpdateProduct.jsx';
+import Payment from './pages/Payment.jsx';
+import PaymentDetails from './pages/PaymentDetails.jsx';
+import UpdatePayment from './pages/UpdatePayment.jsx';
+import Report from './pages/Report.jsx';
 
 export default function App() {
 
@@ -29,6 +33,12 @@ export default function App() {
         <Route path="/productDetails" element={<ProductDetails />} />
         <Route path="/products" element={<Products />} />
         <Route path="/updateProduct/:id" element={<UpdateProduct />} />
+
+        <Route path="/payment/:id" element={<Payment />} />
+        <Route path="/paymentDetails" element={<PaymentDetails />} />
+        <Route path="/updatePayment/:id" element={<UpdatePayment />} />
+
+        <Route path="/report" element={<Report />} />
 
       </Routes>
     </BrowserRouter>

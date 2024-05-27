@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
 
 
+
 export default function InvoiceDetails() {
     const [users, setUsers] = useState([]);
     const [deleteId, setDeleteId] = useState(null);
@@ -85,7 +86,7 @@ export default function InvoiceDetails() {
     //             throw new Error('Failed to delete record');
     //         }
     //         setUsers((prev) => prev.filter((user) => user._id !== deleteId));
-    
+
     //         if (deleteId && productUsers.length > 0) {
     //             const deletedUser = users.find((user) => user._id === deleteId);
     //             if (deletedUser) {
@@ -105,7 +106,7 @@ export default function InvoiceDetails() {
     //                             });
     //                             const updateqty = await res.json();
     //                             console.log(updateqty);
-                    
+
     //                         } catch (error) {
     //                             console.error('Error updating product quantity:', error);
     //                         }
@@ -131,7 +132,7 @@ export default function InvoiceDetails() {
                 throw new Error('Failed to delete record');
             }
             setUsers((prev) => prev.filter((user) => user._id !== deleteId));
-    
+
             if (deleteId && productUsers.length > 0) {
                 const deletedUser = users.find((user) => user._id === deleteId);
                 if (deletedUser) {
@@ -165,7 +166,7 @@ export default function InvoiceDetails() {
             setDeleteId(null);
         }
     };
-    
+
     const handleCancelDelete = () => {
         setOpenDeleteDialog(false);
         setDeleteId(null);
@@ -221,11 +222,16 @@ export default function InvoiceDetails() {
                                         <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalAmount}</td>
                                         <td>
                                             <Link to={`/updateInvoice/${user._id}`}>
-                                                <button className="text-green-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
+                                                <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
                                             </Link>
                                         </td>
                                         <td>
-                                            <button onClick={() => handleDeleteData(user._id)} className="text-red-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                                            <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                                        </td>
+                                        <td>
+                                            <Link to={`/payment/${user._id}`}>
+                                                <button className="text-blue-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Payment</button>
+                                            </Link>
                                         </td>
                                     </>
                                 )}

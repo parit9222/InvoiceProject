@@ -112,11 +112,11 @@ export default function ProductDetails() {
               <td className="border text-center px-4 py-2">{user.productStatus}</td>
               <td>
                 <Link to={`/updateProduct/${user._id}`}>
-                  <button className="text-green-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
+                  <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
                 </Link>
               </td>
               <td>
-                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
               </td>
             </tr>
           ))}
