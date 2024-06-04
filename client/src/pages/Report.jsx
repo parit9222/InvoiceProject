@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 export default function Report() {
     const [users, setUsers] = useState([]);
     const [receipts, setReceipts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -17,10 +18,7 @@ export default function Report() {
                 console.error('Error fetching users:', error);
             }
         };
-        fetchUsers();
-    }, []);
 
-    useEffect(() => {
         const fetchReceipts = async () => {
             try {
                 const response = await fetch('/api/payment/details');
@@ -33,17 +31,35 @@ export default function Report() {
                 console.error('Error fetching receipts:', error);
             }
         };
-        fetchReceipts();
+
+        const fetchData = async () => {
+            await fetchUsers();
+            await fetchReceipts();
+            setLoading(false);
+        };
+
+        fetchData();
     }, []);
 
     const mergeData = () => {
-        return users.map(user => {
-            const userReceipts = receipts.filter(receipt => receipt.customerName === user.customerName);
-            return { ...user, receipts: userReceipts };
-        });
-    };
+        const uniqueUsers = [];
+        const customerNames = new Set();
 
+        users.forEach(user => {
+            if (!customerNames.has(user.customerName)) {
+                customerNames.add(user.customerName);
+                const userReceipts = receipts.filter(receipt => receipt.customerName === user.customerName);
+                uniqueUsers.push({ ...user, receipts: userReceipts });
+            }
+        });
+
+        return uniqueUsers;
+    };
     const mergedData = mergeData();
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div className="container mx-auto">
@@ -51,12 +67,12 @@ export default function Report() {
                 <thead>
                     <tr>
                         <th className="border px-4 py-2">Invoice Number</th>
-                        <th className="border px-4 py-2">Purchase Date</th>
+                        {/* <th className="border px-4 py-2">Purchase Date</th> */}
                         <th className="border px-4 py-2">Customer Name</th>
                         <th className="border px-4 py-2">Mobile Number</th>
-                        <th className="border px-4 py-2">Product Name</th>
+                        {/* <th className="border px-4 py-2">Product Name</th>
                         <th className="border px-4 py-2">Quantity</th>
-                        <th className="border px-4 py-2">Rate</th>
+                        <th className="border px-4 py-2">Rate</th> */}
                         <th className="border px-4 py-2">Receipt Number</th>
                         <th className="border px-4 py-2">Receipt Date</th>
                         <th className="border px-4 py-2">Payment Type</th>
@@ -72,15 +88,15 @@ export default function Report() {
                                 <tr>
                                     {itemIndex === 0 && (
                                         <>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td>
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.receipts[0].invoiceNumber}</td>
+                                            {/* <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td> */}
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
                                         </>
                                     )}
-                                    <td className="border text-center px-4 py-2">{item.productname}</td>
+                                    {/* <td className="border text-center px-4 py-2">{item.productname}</td>
                                     <td className="border text-center px-4 py-2">{item.qty}</td>
-                                    <td className="border text-center px-4 py-2">{item.rate}</td>
+                                    <td className="border text-center px-4 py-2">{item.rate}</td> */}
                                     {itemIndex === 0 && user.receipts.length > 0 && (
                                         <>
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.receipts[0].receiptNumber}</td>
@@ -94,7 +110,7 @@ export default function Report() {
                                 </tr>
                                 {user.receipts.length > 1 && itemIndex === user.items.length - 1 && user.receipts.slice(1).map((receipt, receiptIndex) => (
                                     <tr key={`${user._id}-receipt-${receiptIndex}`}>
-                                        <td className="border text-center px-4 py-2" colSpan={7}></td>
+                                        <td className="border text-center px-4 py-2" colSpan={3}></td>
                                         <td className="border text-center px-4 py-2">{receipt.receiptNumber}</td>
                                         <td className="border text-center px-4 py-2">{receipt.receiptDate}</td>
                                         <td className="border text-center px-4 py-2">{receipt.paymentype}</td>

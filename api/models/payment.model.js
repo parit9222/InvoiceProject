@@ -23,7 +23,6 @@ const paymentSchema = new mongoose.Schema({
     },
     invoiceNumber: {
         type: String,
-        // required: true,
     },
     paymentype: {
         type: String,
@@ -31,16 +30,32 @@ const paymentSchema = new mongoose.Schema({
     },
     totalAmount: {
         type: String,
-        // required: true,
     },
     lastPaidAmount: {
         type: String,
-        // required: true,
     },
     pendingAmount: {
         type: String,
-        // required: true,
     },
+    invoices: [
+        {
+            invoiceNumber: {
+                type: String,
+            },
+            paymentInvoice: {
+                type: String,
+            },
+            pendingAmount: {
+                type: String,
+            },
+            purchaseDate: {
+                type: String,
+            },
+            totalAmount: {
+                type: String,
+            },
+        }
+    ],
 
 }, { timestamps: true });
 

@@ -401,21 +401,6 @@ export default function Invoice() {
                         <DialogTitle>Products</DialogTitle>
                         <DialogContent>
                             <div className='flex flex-col gap-4 flex-1 mt-5'>
-                                {/* <Input type='text' className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='productname' placeholder='Products Name' onChange={handleInputChange} value={popFormData.productname} /> */}
-                                {/* <select id="productname"  onChange={(e) => handleInputChange(e, productName)} value={popFormData} className="p-3 focus:outline-none focus:border-sky-500 border-b-2 border-gray-400">
-                                    <option selected>Products Name</option>
-                                    {productName.map((option, index) => {
-                                        console.log(option);
-                                        return(
-                                        <option
-                                            key={index}
-                                            className="border px-4 py-2 cursor-pointer hover:bg-gray-200"
-                                            value={option._id}
-                                        >
-                                            {option.productsName}
-                                        </option>
-                                    )})}
-                                </select> */}
                                 <select
                                     id="productname"
                                     onChange={(e) => handleInputChange(e, productName)}

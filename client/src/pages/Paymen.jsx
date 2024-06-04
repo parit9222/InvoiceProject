@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
 
-export default function Payment() {
+export default function Paymen() {
     const today = new Date();
     const formattedToday = format(today, 'dd-MM-yyyy');
 
@@ -98,11 +98,6 @@ export default function Payment() {
             const totalAmount = parseFloat(formData.totalAmount) || 0;
             const pendingAmount = totalAmount - sumPaidAmounts;
 
-            // if (parseFloat(value) > parseFloat(totalAmount)) {
-            //     toast.error("Payment amount exceeds pending amount.");
-            //     return;
-            // }
-
             newInvoices[index].pendingAmount = newInvoices[index].totalAmount - (parseFloat(newInvoices[index].paymentInvoice) || 0);
 
             setFormData(prevFormData => ({
@@ -140,7 +135,7 @@ export default function Payment() {
                         invoiceNumber: current.invoiceNumber,
                         purchaseDate: current.purchaseDate,
                         totalAmount: parseFloat(current.totalAmount),
-                        pendingAmount: parseFloat(current.totalAmount),
+                        pendingAmount: parseFloat(current.totalAmount), 
                         paymentInvoice: ''
                     });
                     return acc;
@@ -149,7 +144,7 @@ export default function Payment() {
                     customerMobileNumber: '',
                     invoiceNumber: '',
                     totalAmount: 0,
-                    invoices: []
+                    invoices: [] 
                 });
 
                 setInvoices(mergedData.invoices);
@@ -158,7 +153,7 @@ export default function Payment() {
                     ...prevFormData,
                     ...mergedData,
                     totalAmount: mergedData.totalAmount.toFixed(2),
-                    invoiceNumber: mergedData.invoiceNumber.slice(0, -2)
+                    invoiceNumber: mergedData.invoiceNumber.slice(0, -2) 
                 }));
             } catch (error) {
                 console.log(error, " fetching data error in update");
@@ -170,20 +165,6 @@ export default function Payment() {
 
     const handlePaymentSubmit = async (e) => {
         e.preventDefault();
-
-        
-        for (const invoice of formData.invoices) {
-            if (parseFloat(invoice.paymentInvoice) > parseFloat(invoice.totalAmount)) {
-                toast.error(`Payment amount for invoice ${invoice.invoiceNumber} exceeds pending amount.`);
-                return;
-            }
-        }
-        
-        if (parseFloat(formData.paidAmount) > parseFloat(formData.totalAmount)) {
-            toast.error("Paid amount cannot be greater than the total amount.");
-            return;
-        }
-
         setFormData(prevFormData => ({
             ...prevFormData,
             lastPaidAmount: prevFormData.paidAmount
@@ -211,23 +192,13 @@ export default function Payment() {
 
     const handleDeleteInvoice = (indexToDelete) => {
         const newInvoices = invoices.filter((_, index) => index !== indexToDelete);
-
         const newTotalAmount = newInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
-
-        const newSumPaidAmounts = newInvoices.reduce((sum, invoice) => {
-            return sum + (parseFloat(invoice.paymentInvoice) || 0);
-        }, 0);
-
-        const newPendingAmount = newTotalAmount - newSumPaidAmounts;
 
         setInvoices(newInvoices);
         setFormData(prevFormData => ({
             ...prevFormData,
             totalAmount: newTotalAmount.toFixed(2),
-            paidAmount: newSumPaidAmounts.toFixed(2),
-            lastPaidAmount: newSumPaidAmounts.toFixed(2),
-            pendingAmount: newPendingAmount.toFixed(2),
-            invoices: newInvoices, // Update invoices array in formData
+            pendingAmount: (newTotalAmount - parseFloat(prevFormData.lastPaidAmount)).toFixed(2),
         }));
     };
 
@@ -271,7 +242,7 @@ export default function Payment() {
                     />
                 </div>
 
-                <Link to={`/addNewInvoice/${formData.customerName}/${formData.invoiceNumber}`}>
+                <Link to={'/'}>
                     <div className='flex flex-col gap-4 flex-1 mt-5'>
                         <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add Invoices . . . </button>
                     </div>
@@ -334,15 +305,15 @@ export default function Payment() {
                                 <tr key={index}>
                                     <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
                                     <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
-                                    <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
-                                    <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
+                                    <td className="border px-4 py-2 text-center">{invoice.totalAmount}</td>
+                                    <td className="border px-4 py-2 text-center">{invoice.pendingAmount}</td>
                                     <td className="border w-80 px-4 py-2 text-center">
                                         <Input
                                             type='text'
                                             className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
                                             id='paymentInvoice'
                                             placeholder='Pay'
-                                            value={invoice.paymentInvoice}
+                                            value={invoice.paymentInvoice || ''}
                                             onChange={(e) => handleFetchData(e, index)}
                                         />
                                     </td>
@@ -371,9 +342,9 @@ export default function Payment() {
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="border font-semibold px-4 py-2 text-center">{formData.totalAmount}</td>
-                                <td className="border text-green-600 font-semibold px-4 py-2 text-center">{formData.lastPaidAmount}</td>
-                                <td className="border text-red-600 font-semibold px-4 py-2 text-center">{formData.pendingAmount}</td>
+                                <td className="border px-4 py-2 text-center">{formData.totalAmount}</td>
+                                <td className="border px-4 py-2 text-center">{formData.lastPaidAmount}</td>
+                                <td className="border px-4 py-2 text-center">{formData.pendingAmount}</td>
                             </tr>
                         </tbody>
                     </table>

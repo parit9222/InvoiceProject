@@ -13,8 +13,17 @@ export const payment = async (req, res, next) => {
             paymentype,
             totalAmount,
             lastPaidAmount,
-            pendingAmount,            
+            pendingAmount, 
+            invoices: itemData,           
         } = req.body;
+
+        const itemObjects = itemData.map(item => ({
+            invoiceNumber: item.invoiceNumber,
+            paymentInvoice: item.paymentInvoice,
+            pendingAmount: item.pendingAmount,
+            purchaseDate: item.purchaseDate,
+            totalAmount: item.totalAmount,
+        }));
 
         const newPayment = new Payment({
             receiptNumber,
@@ -27,6 +36,7 @@ export const payment = async (req, res, next) => {
             totalAmount,
             lastPaidAmount,
             pendingAmount,
+            invoices: itemObjects,
         });
 
         const userPayment = await newPayment.save();
@@ -128,6 +138,7 @@ export const updateReceipt = async (req, res, next) => {
             totalAmount: req.body.totalAmount,
             lastPaidAmount: req.body.lastPaidAmount,
             pendingAmount: req.body.pendingAmount,
+            invoices: req.body.invoices,
         });
 
         const savedPayment = await newPayment.save();

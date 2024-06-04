@@ -22,6 +22,7 @@ export default function UpdatePayment() {
         totalAmount: '',
         lastPaidAmount: '',
         pendingAmount: '',
+        invoices: [],
     });
     console.log(formData);
     const [phno, setPhno] = useState('');
@@ -51,13 +52,28 @@ export default function UpdatePayment() {
         }));
     };
 
-    const handleFetchData = (e) => {
+    const handleFetchData = (e, index) => {
         const { id, value } = e.target;
 
-        if (id === 'paidAmount') {
+        if (id === 'paidAmount') { 
             setFormData(prevFormData => ({
                 ...prevFormData,
                 paidAmount: value,
+                lastPaidAmount: value,
+            }));
+        } else if (id === 'paymentInvoice') {
+            const newInvoices = [...formData.invoices];
+            newInvoices[index].paymentInvoice = value;
+
+            const sumPaidAmounts = newInvoices.reduce((sum, invoice) => {
+                return sum + (parseFloat(invoice.paymentInvoice) || 0);
+            }, 0);
+
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                invoices: newInvoices,
+                paidAmount: sumPaidAmounts.toFixed(2),
+                lastPaidAmount: sumPaidAmounts.toFixed(2),
             }));
         } else {
             setFormData(prevFormData => ({
@@ -79,7 +95,7 @@ export default function UpdatePayment() {
     const { id } = useParams();
     useEffect(() => {
         const fetchData = async () => {
-            try {
+            try {   
                 const res = await fetch(`/api/payment/currentUserReceipt/${id}`);
                 const data = await res.json();
                 if (data) {
@@ -95,10 +111,11 @@ export default function UpdatePayment() {
                         totalAmount: user.totalAmount,
                         lastPaidAmount: user.lastPaidAmount,
                         pendingAmount: user.pendingAmount,
+                        invoices: user.invoices || [],
                     });
                 }
             } catch (error) {
-                console.log(error, " fetching data error in update");
+                console.log(error, "fetching data error in update");
             }
         };
 
@@ -107,14 +124,37 @@ export default function UpdatePayment() {
 
     const handlePaymentUpdate = async (e) => {
         e.preventDefault();
+        
+        
+        for (const invoice of formData.invoices) {
+            if (parseFloat(invoice.paymentInvoice) > parseFloat(invoice.pendingAmount)) {
+                toast.error(`Payment for invoice ${invoice.invoiceNumber} exceeds pending amount.`);
+                return;
+            }
+        }
+        if (parseFloat(formData.paidAmount) > parseFloat(formData.totalAmount)) {
+            toast.error("Paid amount cannot be greater than the total amount.");
+            return;
+        }
+
         try {
+            const updatedInvoices = formData.invoices.map(invoice => {
+                const pendingAmount = invoice.pendingAmount - invoice.paymentInvoice;
+                return {
+                    ...invoice,
+                    pendingAmount: pendingAmount
+                };
+            });
+            
             const updatedFormData = {
                 ...formData,
                 lastPaidAmount: formData.paidAmount,
-                pendingAmount: (formData.pendingAmount) - (formData.paidAmount),
+                pendingAmount: formData.pendingAmount - formData.paidAmount,
+                invoices: updatedInvoices 
             };
+    
             console.log(updatedFormData);
-
+    
             const res = await fetch(`/api/payment/update/${id}`, {
                 method: "PUT",
                 headers: {
@@ -122,10 +162,10 @@ export default function UpdatePayment() {
                 },
                 body: JSON.stringify(updatedFormData),
             });
+    
             const data = await res.json();
             if (data) {
                 setSuccessDialogOpen(true);
-                return;
             } else {
                 console.log(data.message);
             }
@@ -144,7 +184,7 @@ export default function UpdatePayment() {
     };
 
     return (
-        <div className='p-3 max-w-lg mx-auto'>
+        <div className='p-3 max-w-xl mx-auto'>
             <h1 className='text-3xl text-center font-semibold my-2'>Payment</h1>
 
             <form onSubmit={prevent}>
@@ -156,7 +196,7 @@ export default function UpdatePayment() {
                     <Input type='text' onChange={handleFetchData} value={formData.customerName} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='customerName' placeholder='Customer Name' />
                 </div>
 
-                <div className='flex gap-4 flex-1 mt-5'>
+                <div className='flex gap-16 flex-1 mt-5'>
                     <Input
                         type="tel"
                         value={phno || formData.customerMobileNumber}
@@ -226,10 +266,42 @@ export default function UpdatePayment() {
                 </div>
 
                 <div className="container mx-auto">
-                    <table className="table-auto max-w-lg mx-auto mt-5">
+                    <table className="mt-5">
                         <thead>
                             <tr>
                                 <th className="border px-4 py-2">Invoice Number</th>
+                                <th className="border px-4 py-2">Purchase Date</th>
+                                <th className="border px-4 py-2">Amount</th>
+                                <th className="border px-4 py-2">Pending Amount</th>
+                                <th className="border px-4 py-2">Pay</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {formData.invoices.map((invoice, index) => (
+                                <tr key={index}>
+                                    <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
+                                    <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
+                                    <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
+                                    <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
+                                    <td className="border w-80 px-4 py-2 text-center">
+                                        <Input
+                                            type='text'
+                                            className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+                                            id='paymentInvoice'
+                                            placeholder='Pay'
+                                            onChange={(e) => handleFetchData(e, index)}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="container mx-auto">
+                    <table className="table-auto max-w-lg mx-auto mt-5">
+                        <thead>
+                            <tr>
                                 <th className="border px-4 py-2">Total Amount</th>
                                 <th className="border px-4 py-2">Last Paid Amount</th>
                                 <th className="border px-4 py-2">Pending Amount</th>
@@ -237,10 +309,9 @@ export default function UpdatePayment() {
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="border px-4 py-2 text-center">{formData.invoiceNumber}</td>
-                                <td className="border px-4 py-2 text-center">{formData.totalAmount}</td>
-                                <td className="border px-4 py-2 text-center">{formData.lastPaidAmount}</td>
-                                <td className="border px-4 py-2 text-center">{formData.pendingAmount}</td>
+                                <td className="border font-semibold px-4 py-2 text-center">{formData.totalAmount}</td>
+                                <td className="border text-green-600 font-semibold px-4 py-2 text-center">{formData.lastPaidAmount}</td>
+                                <td className="border text-red-600 font-semibold px-4 py-2 text-center">{formData.pendingAmount}</td>
                             </tr>
                         </tbody>
                     </table>

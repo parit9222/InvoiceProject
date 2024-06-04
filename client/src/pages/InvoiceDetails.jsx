@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
-
-
 
 export default function InvoiceDetails() {
     const [users, setUsers] = useState([]);
     const [deleteId, setDeleteId] = useState(null);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedCustomerName, setSelectedCustomerName] = useState(null);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -25,7 +25,6 @@ export default function InvoiceDetails() {
         fetchUsers();
     }, []);
 
-
     const [productName, setProductName] = useState([]);
     const [productUsers, setProductUsers] = useState([]);
     useEffect(() => {
@@ -39,7 +38,6 @@ export default function InvoiceDetails() {
                 const activeProductNames = data.data.map(product => product.productsName);
 
                 setProductName(activeProductNames);
-
                 setProductUsers(data.data);
             } catch (error) {
                 console.error('Error fetching users:', error);
@@ -47,81 +45,23 @@ export default function InvoiceDetails() {
         };
         fetchUsers();
     }, []);
-
-
-
+    
+    const handleCheckboxChange = (id, customerName) => {
+        setSelectedIds((prev) => {
+            if (prev.includes(id)) {
+                setSelectedCustomerName(null);
+                return prev.filter((selectedId) => selectedId !== id);
+            } else {
+                setSelectedCustomerName(customerName);
+                return [...prev, id];
+            }
+        });
+    };
 
     const handleDeleteData = (id) => {
         setDeleteId(id);
         setOpenDeleteDialog(true);
     };
-
-    // const handleConfirmDelete = async () => {
-    //     try {
-    //         const res = await fetch(`/api/user/delete/${deleteId}`, {
-    //             method: 'DELETE',
-    //         });
-    //         if (!res.ok) {
-    //             throw new Error('Failed to delete record');
-    //         }
-    //         // Update state after successful deletion
-    //         setUsers((prev) => prev.filter((user) => user._id !== deleteId));
-    //     } catch (error) {
-    //         console.log('Error deleting record:', error.message);
-    //     } finally {
-    //         // Reset state
-    //         setOpenDeleteDialog(false);
-    //         setDeleteId(null);
-    //     }
-    // };
-
-
-
-    // const handleConfirmDelete = async () => {
-    //     try {
-    //         const res = await fetch(`/api/user/delete/${deleteId}`, {
-    //             method: 'DELETE',
-    //         });
-    //         if (!res.ok) {
-    //             throw new Error('Failed to delete record');
-    //         }
-    //         setUsers((prev) => prev.filter((user) => user._id !== deleteId));
-
-    //         if (deleteId && productUsers.length > 0) {
-    //             const deletedUser = users.find((user) => user._id === deleteId);
-    //             if (deletedUser) {
-    //                 deletedUser.items.forEach(async(item) => {
-    //                     // console.log(item);
-    //                     const productToUpdate = productUsers.find((product) => {product._id === item.productId});
-    //                     console.log(productToUpdate);
-    //                     if (productToUpdate) {
-    //                         const updatedQty = (+productToUpdate.qty) + (+item.qty); 
-    //                         try {
-    //                             const res = await fetch(`/api/product/update/${productToUpdate._id}`, {
-    //                                 method: "PUT",
-    //                                 headers: {
-    //                                     "Content-Type": "application/json",
-    //                                 },
-    //                                 body: JSON.stringify({ productId: productToUpdate._id, qty: updatedQty }),
-    //                             });
-    //                             const updateqty = await res.json();
-    //                             console.log(updateqty);
-
-    //                         } catch (error) {
-    //                             console.error('Error updating product quantity:', error);
-    //                         }
-    //                     }
-    //                 });
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.log('Error deleting record:', error.message);
-    //     } finally {
-    //         // Reset state
-    //         setOpenDeleteDialog(false);
-    //         setDeleteId(null);
-    //     }
-    // };
 
     const handleConfirmDelete = async () => {
         try {
@@ -138,7 +78,6 @@ export default function InvoiceDetails() {
                 if (deletedUser) {
                     deletedUser.items.forEach(async (item) => {
                         const productToUpdate = productUsers.find((product) => product._id === item.productId);
-                        console.log(productToUpdate);
                         if (productToUpdate) {
                             const updatedQty = (+productToUpdate.qty) + (+item.qty);
                             try {
@@ -161,7 +100,6 @@ export default function InvoiceDetails() {
         } catch (error) {
             console.log('Error deleting record:', error.message);
         } finally {
-            // Reset state
             setOpenDeleteDialog(false);
             setDeleteId(null);
         }
@@ -173,17 +111,29 @@ export default function InvoiceDetails() {
     };
 
     return (
-
         <div className="container mx-auto">
             <div className='flex gap-4 flex-1 mt-5'>
-                <Link to={'/invoice'}>
-                    <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add Invoice</button>
-                </Link>
+                <div className='flex gap-6 mt-5'>
+                    <Link to={'/invoice'}>
+                        <button className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add Invoice</button>
+                    </Link>
+                </div>
+                <div className='flex gap-6 mt-5'>
+                    <Link to={`/payment/${selectedIds.join(',')}`}>
+                        <button
+                            className="p-3 px-6 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95"
+                            disabled={selectedIds.length === 0}
+                        >
+                            Payment
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             <table className="table-auto max-w-lg mx-auto mt-5">
                 <thead>
                     <tr>
+                        <th></th>
                         <th className="border px-4 py-2">Invoice Number</th>
                         <th className="border px-4 py-2">Customer Name</th>
                         <th className="border px-4 py-2">Mobile Number</th>
@@ -204,6 +154,18 @@ export default function InvoiceDetails() {
                             <tr key={`${user._id}-${index}`}>
                                 {index === 0 && (
                                     <>
+                                        <td>
+                                            {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
+                                                <input
+                                                    type='checkbox'
+                                                    id='select'
+                                                    className='w-5 mx-5'
+                                                    checked={selectedIds.includes(user._id)}
+                                                    onChange={() => handleCheckboxChange(user._id, user.customerName)}
+                                                />
+                                            ) : null}
+                                        </td>
+
                                         <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
                                         <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
                                         <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
@@ -228,11 +190,6 @@ export default function InvoiceDetails() {
                                         <td>
                                             <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
                                         </td>
-                                        <td>
-                                            <Link to={`/payment/${user._id}`}>
-                                                <button className="text-blue-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Payment</button>
-                                            </Link>
-                                        </td>
                                     </>
                                 )}
                             </tr>
@@ -256,5 +213,5 @@ export default function InvoiceDetails() {
                 </DialogActions>
             </Dialog>
         </div>
-    )
+    );
 }
