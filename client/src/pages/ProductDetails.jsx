@@ -1,45 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
+import { MdDelete } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
 
 export default function ProductDetails() {
 
   const [users, setUsers] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
-
-
-
-
-  // const [usersProducts, setUsersProducts] = useState([]);
-  // console.log(usersProducts.map(it => it.qty));
-
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     try {
-  //       const response = await fetch('/api/user/details');
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch users');
-  //       }
-  //       const data = await response.json();
-  //       console.log(data.data)
-  //       const product = data.data;
-  //       const demo = product.map((item) => item.items);
-  //       setUsersProducts(demo.map(e => e));
-  //       // setUsersProducts(demo.map(e => e.map(it => it.qty)));
-        
-  //     } catch (error) {
-  //       console.error('Error fetching users:', error);
-  //     }
-  //   };
-
-  //   fetchUsers();
-  // }, []);
-
-
-
-
 
 
     useEffect(() => {
@@ -112,11 +81,11 @@ export default function ProductDetails() {
               <td className="border text-center px-4 py-2">{user.productStatus}</td>
               <td>
                 <Link to={`/updateProduct/${user._id}`}>
-                  <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
+                  <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl pl-6 px-3 py-2"><FaEdit className='h-6 w-6' /></button>
                 </Link>
               </td>
               <td>
-                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-3 py-2"><MdDelete className='h-6 w-6' /></button>
               </td>
             </tr>
           ))}

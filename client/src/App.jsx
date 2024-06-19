@@ -13,9 +13,9 @@ import UpdateProduct from './pages/UpdateProduct.jsx';
 import Payment from './pages/Payment.jsx';
 import PaymentDetails from './pages/PaymentDetails.jsx';
 import UpdatePayment from './pages/UpdatePayment.jsx';
-import Report from './pages/Report.jsx';
 import PaymentAddInvoice from './pages/PaymentAddInvoice.jsx';
-import Paymen from './pages/Paymen.jsx';
+import PaymentUpdate from './pages/PaymentUpdate.jsx';
+import Report from './pages/Report.jsx';
 
 export default function App() {
 
@@ -37,9 +37,9 @@ export default function App() {
         <Route path="/updateProduct/:id" element={<UpdateProduct />} />
 
         <Route path="/payment/:id" element={<Payment />} />
-        <Route path="/paymen" element={<Paymen />} />
         <Route path="/paymentDetails" element={<PaymentDetails />} />
         <Route path="/updatePayment/:id" element={<UpdatePayment />} />
+        <Route path="/paymentUpdate/:id" element={<PaymentUpdate />} />
         <Route path="/addNewInvoice/:customerName/:invoiceNumber" element={<PaymentAddInvoice />} />
 
         <Route path="/report" element={<Report />} />

@@ -7,10 +7,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
+import PaymentAddInvoice from './PaymentAddInvoice';
+import { MdDelete } from "react-icons/md";
+import PaymentPopUp from './PaymentPopUp';
 
 export default function UpdatePayment() {
+
     const today = new Date();
     const formattedToday = format(today, 'dd-MM-yyyy');
+
     const [formData, setFormData] = useState({
         receiptNumber: '',
         customerName: '',
@@ -25,11 +30,15 @@ export default function UpdatePayment() {
         invoices: [],
     });
     console.log(formData);
+
     const [phno, setPhno] = useState('');
     const [selectedDate, setSelectedDate] = useState(today);
+    const [invoices, setInvoices] = useState([]);
     const navigate = useNavigate();
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-
+    const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [selectedInvoices, setSelectedInvoices] = useState([]);
     const handlePhnoBlur = () => {
         if (phno.length < 10) {
             toast.error("Phone number must be 10 digits");
@@ -46,20 +55,43 @@ export default function UpdatePayment() {
     const handleDateChange = (date) => {
         const formattedDate = format(date, 'dd-MM-yyyy');
         setSelectedDate(date);
-        setFormData(prevData => ({
-            ...prevData,
+        setFormData(prevFormData => ({
+            ...prevFormData,
             receiptDate: formattedDate,
         }));
+    };
+
+    const successpop = () => {
+        setSuccessDialogOpen(false);
+        navigate('/paymentDetails');
+    }
+
+    const prevent = (e) => {
+        e.preventDefault();
+    }
+
+    const handleFetchPaymentType = (e) => {
+        if (e.target.id === 'cash' || e.target.id === 'bank' || e.target.id === 'online') {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                paymentype: e.target.id,
+            }));
+        }
     };
 
     const handleFetchData = (e, index) => {
         const { id, value } = e.target;
 
-        if (id === 'paidAmount') { 
+        if (id === 'paidAmount') {
+            // const lastPaidAmount = parseFloat(value) || 0;
+            // const totalAmount = parseFloat(formData.totalAmount) || 0;
+            // const pendingAmount = totalAmount - lastPaidAmount;
+
             setFormData(prevFormData => ({
                 ...prevFormData,
                 paidAmount: value,
-                lastPaidAmount: value,
+                // lastPaidAmount: value,
+                // pendingAmount: pendingAmount.toFixed(2),
             }));
         } else if (id === 'paymentInvoice') {
             const newInvoices = [...formData.invoices];
@@ -69,11 +101,17 @@ export default function UpdatePayment() {
                 return sum + (parseFloat(invoice.paymentInvoice) || 0);
             }, 0);
 
+            // const totalAmount = parseFloat(formData.totalAmount) || 0;
+            // const pendingAmount = totalAmount - sumPaidAmounts;
+
+            // newInvoices[index].pendingAmount = newInvoices[index].totalAmount - (parseFloat(newInvoices[index].paymentInvoice) || 0);
+
             setFormData(prevFormData => ({
                 ...prevFormData,
                 invoices: newInvoices,
                 paidAmount: sumPaidAmounts.toFixed(2),
-                lastPaidAmount: sumPaidAmounts.toFixed(2),
+                // lastPaidAmount: sumPaidAmounts.toFixed(2),
+                // pendingAmount: pendingAmount.toFixed(2),
             }));
         } else {
             setFormData(prevFormData => ({
@@ -83,23 +121,20 @@ export default function UpdatePayment() {
         }
     };
 
-    const handleFetchPaymentType = (e) => {
-        if (e.target.id === 'cash' || e.target.id === 'bank' || e.target.id === 'online') {
-            setFormData(prevData => ({
-                ...prevData,
-                paymentype: e.target.id,
-            }));
-        }
-    };
+
 
     const { id } = useParams();
     useEffect(() => {
         const fetchData = async () => {
-            try {   
+            try {
                 const res = await fetch(`/api/payment/currentUserReceipt/${id}`);
                 const data = await res.json();
                 if (data) {
                     const user = data.data;
+                    const initializedInvoices = user.invoices.map(invoice => ({
+                        ...invoice,
+                        paymentInvoice: ''
+                    }));
                     setFormData({
                         receiptNumber: user.receiptNumber,
                         customerName: user.customerName,
@@ -107,11 +142,11 @@ export default function UpdatePayment() {
                         receiptDate: user.receiptDate,
                         paidAmount: '',
                         invoiceNumber: user.invoiceNumber,
-                        paymentType: user.paymentType,
+                        paymentype: user.paymentype,
                         totalAmount: user.totalAmount,
                         lastPaidAmount: user.lastPaidAmount,
                         pendingAmount: user.pendingAmount,
-                        invoices: user.invoices || [],
+                        invoices: initializedInvoices,
                     });
                 }
             } catch (error) {
@@ -122,39 +157,43 @@ export default function UpdatePayment() {
         fetchData();
     }, [id]);
 
-    const handlePaymentUpdate = async (e) => {
+
+    const handlePaymentSubmit = async (e) => {
         e.preventDefault();
-        
-        
-        for (const invoice of formData.invoices) {
+
+        const filledInvoices = formData.invoices.filter(invoice => invoice.paymentInvoice && invoice.paymentInvoice !== "");
+
+        for (const invoice of filledInvoices) {
             if (parseFloat(invoice.paymentInvoice) > parseFloat(invoice.pendingAmount)) {
                 toast.error(`Payment for invoice ${invoice.invoiceNumber} exceeds pending amount.`);
                 return;
             }
         }
-        if (parseFloat(formData.paidAmount) > parseFloat(formData.totalAmount)) {
-            toast.error("Paid amount cannot be greater than the total amount.");
-            return;
-        }
+
+        const sumPaidAmounts = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.paymentInvoice) || 0), 0);
+        const totalAmount = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.totalAmount) || 0), 0);
+        const pending = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.pendingAmount) || 0), 0);
+        const pendingAmount = pending - sumPaidAmounts;
 
         try {
-            const updatedInvoices = formData.invoices.map(invoice => {
+            const updatedInvoices = filledInvoices.map(invoice => {
                 const pendingAmount = invoice.pendingAmount - invoice.paymentInvoice;
                 return {
                     ...invoice,
-                    pendingAmount: pendingAmount
+                    pendingAmount: pendingAmount.toFixed(2),
                 };
             });
-            
+
             const updatedFormData = {
                 ...formData,
-                lastPaidAmount: formData.paidAmount,
-                pendingAmount: formData.pendingAmount - formData.paidAmount,
-                invoices: updatedInvoices 
+                lastPaidAmount: sumPaidAmounts.toFixed(2),
+                pendingAmount: pendingAmount.toFixed(2),
+                totalAmount: totalAmount.toFixed(2),
+                invoices: updatedInvoices,
             };
-    
+
             console.log(updatedFormData);
-    
+
             const res = await fetch(`/api/payment/update/${id}`, {
                 method: "PUT",
                 headers: {
@@ -162,7 +201,7 @@ export default function UpdatePayment() {
                 },
                 body: JSON.stringify(updatedFormData),
             });
-    
+
             const data = await res.json();
             if (data) {
                 setSuccessDialogOpen(true);
@@ -174,22 +213,106 @@ export default function UpdatePayment() {
         }
     };
 
-    const successpop = () => {
-        setSuccessDialogOpen(false);
-        navigate('/paymentDetails');
+
+
+
+    const handleDeleteInvoice = (indexToDelete) => {
+        const newInvoices = formData.invoices.filter((_, index) => index !== indexToDelete);
+
+        const newTotalAmount = newInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, '');
+        const newSumPaidAmounts = newInvoices.reduce((sum, invoice) => {
+            return sum + (parseFloat(invoice.paymentInvoice) || 0);
+        }, 0);
+        const newPendingAmount = newTotalAmount - newSumPaidAmounts;
+
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            totalAmount: newTotalAmount,
+            paidAmount: newSumPaidAmounts,
+            lastPaidAmount: newSumPaidAmounts,
+            pendingAmount: newPendingAmount,
+            invoices: newInvoices,
+        }));
+        setInvoices(newInvoices);
     };
 
-    const prevent = (e) => {
-        e.preventDefault();
+
+    const handleAddInvoices = () => {
+        setInvoiceDialogOpen(true);
     };
+
+    // const handleInvoiceSelect = (selectedInvoices, totalAmount) => {
+    //     const selectedInvoiceNumbers = selectedInvoices.map(invoice => invoice.invoiceNumber).join(", ");
+    //     const updatedInvoices = selectedInvoices.map(invoice => ({
+    //         ...invoice,
+    //         pendingAmount: invoice.totalAmount,
+    //         paymentInvoice: ""
+    //     }));
+    //     const newTotalAmount = updatedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.totalAmount), 0);
+
+    //     setFormData(prevFormData => ({
+    //         ...prevFormData,
+    //         invoiceNumber: selectedInvoiceNumbers,
+    //         invoices: updatedInvoices,
+    //         totalAmount: newTotalAmount.toFixed(2),
+    //         paidAmount: "0.00",
+    //         lastPaidAmount: "0.00",
+    //         pendingAmount: newTotalAmount.toFixed(2),
+    //     }));
+    // };
+
+    const handleInvoiceSelect = (selectedInvoices, totalAmount) => {
+        const selectedInvoiceNumbers = selectedInvoices.map(invoice => invoice.invoiceNumber).join(", ");
+        const updatedInvoices = selectedInvoices.map(invoice => ({
+            ...invoice,
+            pendingAmount: invoice.totalAmount,
+            paymentInvoice: ""
+        }));
+        const newTotalAmount = updatedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.totalAmount), 0);
+
+        const mergedInvoices = [...formData.invoices, ...updatedInvoices];
+
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            invoiceNumber: selectedInvoiceNumbers,
+            invoices: mergedInvoices,
+            totalAmount: newTotalAmount.toFixed(2),
+            paidAmount: "0.00",
+            lastPaidAmount: "0.00",
+            pendingAmount: newTotalAmount.toFixed(2),
+        }));
+    };
+
+
+
+    const handleAddOldInvoices = () => {
+        setShowPopUp(true);
+    };
+
+    const handleOldInvoiceSelect = (selectedInvoices, totalAmount) => {
+        console.log(selectedInvoices);
+        console.log(totalAmount);
+        const updatedSelectedInvoices = selectedInvoices.map(invoice => ({
+            ...invoice,
+            paymentInvoice: ""
+        }));
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            invoiceNumber: [...prevFormData.invoices.map(invoice => invoice.invoiceNumber), ...updatedSelectedInvoices.map(invoice => invoice.invoiceNumber)].join(", "),
+            invoices: [...prevFormData.invoices, ...updatedSelectedInvoices],
+        }));
+    };
+
+
 
     return (
         <div className='p-3 max-w-xl mx-auto'>
             <h1 className='text-3xl text-center font-semibold my-2'>Payment</h1>
 
             <form onSubmit={prevent}>
+
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <Input type='text' onChange={handleFetchData} value={formData.receiptNumber} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='receiptNumber' placeholder='Receipt Number' />
+                    <Input type='text' value={formData.receiptNumber} onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='receiptNumber' placeholder='Receipt Number' />
                 </div>
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
@@ -214,6 +337,7 @@ export default function UpdatePayment() {
                     <DatePicker
                         placeholderText='Payment Date'
                         selected={selectedDate}
+                        value={selectedDate || formData.purchaseDate}
                         onChange={handleDateChange}
                         dateFormat="MM/dd/yyyy"
                         className="p-4 w-60 focus:outline-none focus:border-sky-500 border-b border-gray-400"
@@ -222,12 +346,23 @@ export default function UpdatePayment() {
                 </div>
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <Input type='text' onChange={handleFetchData} value={formData.paidAmount} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='paidAmount' placeholder='Paid Amount' />
+                    <button onClick={handleAddInvoices} className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add New Invoices . . . </button>
+                </div>
+
+                <PaymentAddInvoice
+                    open={invoiceDialogOpen}
+                    onClose={() => setInvoiceDialogOpen(false)}
+                    customerName={formData.customerName}
+                    invoiceNumber={formData.invoiceNumber}
+                    onSelectInvoices={handleInvoiceSelect}
+                />
+
+                <div className='flex flex-col gap-4 flex-1 mt-5'>
+                    <Input type='text' onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' value={formData.paidAmount || ''} id='paidAmount' placeholder='Paid Amount' />
                 </div>
 
                 <div className='flex gap-10 mt-6 flex-wrap'>
                     <span className='mx-6 text-slate-600'>Payment Type  : </span>
-
                     <div className='flex gap-2'>
                         <input
                             type="radio"
@@ -239,7 +374,6 @@ export default function UpdatePayment() {
                         />
                         <span className='text-slate-600'>Cash</span>
                     </div>
-
                     <div className='flex gap-2'>
                         <input
                             type="radio"
@@ -251,7 +385,6 @@ export default function UpdatePayment() {
                         />
                         <span className='text-slate-600'>Bank</span>
                     </div>
-
                     <div className='flex gap-2'>
                         <input
                             type="radio"
@@ -265,6 +398,8 @@ export default function UpdatePayment() {
                     </div>
                 </div>
 
+                <button type="button" className='p-3 mt-4 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95' onClick={handleAddOldInvoices}>Add Old Invoices</button>
+
                 <div className="container mx-auto">
                     <table className="mt-5">
                         <thead>
@@ -277,23 +412,35 @@ export default function UpdatePayment() {
                             </tr>
                         </thead>
                         <tbody>
-                            {formData.invoices.map((invoice, index) => (
-                                <tr key={index}>
-                                    <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
-                                    <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
-                                    <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
-                                    <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
-                                    <td className="border w-80 px-4 py-2 text-center">
-                                        <Input
-                                            type='text'
-                                            className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
-                                            id='paymentInvoice'
-                                            placeholder='Pay'
-                                            onChange={(e) => handleFetchData(e, index)}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
+                            {formData.invoices.map((invoice, index) => {
+                                console.log(formData.invoices);
+                                return (
+                                    <tr key={index}>
+                                        <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
+                                        <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
+                                        <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
+                                        <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
+                                        <td className="border w-80 px-4 py-2 text-center">
+                                            <Input
+                                                type='text'
+                                                className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+                                                id='paymentInvoice'
+                                                placeholder='Pay'
+                                                // value={invoice.paymentInvoice}
+                                                onChange={(e) => handleFetchData(e, index)}
+                                            />
+                                        </td>
+                                        <td>
+                                            <button
+                                                className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2"
+                                                onClick={() => handleDeleteInvoice(index)}
+                                            >
+                                                <MdDelete className='h-6 w-6' />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -318,8 +465,9 @@ export default function UpdatePayment() {
                 </div>
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <button onClick={handlePaymentUpdate} className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Save</button>
+                    <button onClick={handlePaymentSubmit} className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Save</button>
                 </div>
+
             </form>
 
             <Dialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
@@ -331,8 +479,14 @@ export default function UpdatePayment() {
                     <Button onClick={successpop}>Close</Button>
                 </DialogActions>
             </Dialog>
+            <PaymentPopUp
+                open={showPopUp}
+                onClose={() => setShowPopUp(false)}
+                existingInvoices={formData.invoices}
+                onSelectInvoices={handleOldInvoiceSelect}
+            />
 
             <ToastContainer />
         </div>
-    );
+    )
 }

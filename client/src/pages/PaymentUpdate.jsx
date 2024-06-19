@@ -9,8 +9,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
 import PaymentAddInvoice from './PaymentAddInvoice';
 import { MdDelete } from "react-icons/md";
+import PaymentPopUp from './PaymentPopUp';
 
-export default function Payment() {
+
+
+export default function PaymentUpdate() {
+
     const today = new Date();
     const formattedToday = format(today, 'dd-MM-yyyy');
 
@@ -27,14 +31,17 @@ export default function Payment() {
         pendingAmount: '',
         invoices: [],
     });
-    console.log(formData);
 
+
+    const [invoicesArray, setInvoicesArray] = useState();
+    console.log(invoicesArray);
+    const [invoices, setInvoices] = useState([]);
     const [phno, setPhno] = useState('');
     const [selectedDate, setSelectedDate] = useState(today);
-    const [invoices, setInvoices] = useState([]);
     const navigate = useNavigate();
     const [successDialogOpen, setSuccessDialogOpen] = useState(false);
     const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+    const [showPopUp, setShowPopUp] = useState(false);
 
     const handlePhnoBlur = () => {
         if (phno.length < 10) {
@@ -61,11 +68,11 @@ export default function Payment() {
     const successpop = () => {
         setSuccessDialogOpen(false);
         navigate('/paymentDetails');
-    }
+    };
 
     const prevent = (e) => {
         e.preventDefault();
-    }
+    };
 
     const handleFetchPaymentType = (e) => {
         if (e.target.id === 'cash' || e.target.id === 'bank' || e.target.id === 'online') {
@@ -76,19 +83,20 @@ export default function Payment() {
         }
     };
 
-    const handleFetchData = (e, index) => {
+
+    const handleFetchBlurData = (e, index) => {
         const { id, value } = e.target;
 
         if (id === 'paidAmount') {
-            const lastPaidAmount = parseFloat(value) || 0;
-            const totalAmount = parseFloat(formData.totalAmount) || 0;
-            const pendingAmount = totalAmount - lastPaidAmount;
+            // const lastPaidAmount = parseFloat(value) || 0;
+            // const totalAmount = parseFloat(formData.totalAmount) || 0;
+            // const pendingAmount = totalAmount - lastPaidAmount;
 
             setFormData(prevFormData => ({
                 ...prevFormData,
                 paidAmount: value,
-                lastPaidAmount: value,
-                pendingAmount: pendingAmount.toFixed(2),
+                // lastPaidAmount: value,
+                // pendingAmount: pendingAmount.toFixed(2),
             }));
         } else if (id === 'paymentInvoice') {
             const newInvoices = [...formData.invoices];
@@ -98,18 +106,17 @@ export default function Payment() {
                 return sum + (parseFloat(invoice.paymentInvoice) || 0);
             }, 0);
 
-            const totalAmount = parseFloat(formData.totalAmount) || 0;
-            const pendingAmount = totalAmount - sumPaidAmounts;
+            // const totalAmount = parseFloat(formData.totalAmount) || 0;
+            // const pendingAmount = totalAmount - sumPaidAmounts;
 
-
-            newInvoices[index].pendingAmount = newInvoices[index].totalAmount - (parseFloat(newInvoices[index].paymentInvoice) || 0);
+            // newInvoices[index].pendingAmount = newInvoices[index].totalAmount - (parseFloat(newInvoices[index].paymentInvoice) || 0);
 
             setFormData(prevFormData => ({
                 ...prevFormData,
                 invoices: newInvoices,
                 paidAmount: sumPaidAmounts.toFixed(2),
-                lastPaidAmount: sumPaidAmounts.toFixed(2),
-                pendingAmount: pendingAmount.toFixed(2),
+                // lastPaidAmount: sumPaidAmounts.toFixed(2),
+                // pendingAmount: pendingAmount.toFixed(2),
             }));
         } else {
             setFormData(prevFormData => ({
@@ -119,48 +126,79 @@ export default function Payment() {
         }
     };
 
+
+    const handleFetchData = (e, index) => {
+        const { id, value } = e.target;
+    
+        if (id === 'paidAmount') {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                paidAmount: value,
+            }));
+        } else if (id === 'paymentInvoice') {
+            const newInvoices = [...formData.invoices];
+            console.log(newInvoices);
+            newInvoices[index].paymentInvoice = value;
+    
+            const updatedInvoices = newInvoices.map((invoice, i) => {
+                if (i === index) {
+                    const updatedPendingAmount = parseFloat(invoice.pendingAmount) - (parseFloat(value) || 0);
+                    return {
+                        ...invoice,
+                        pendingAmount: updatedPendingAmount.toFixed(2),
+                    };
+                }
+                return invoice;
+            });
+    
+            const sumPaidAmounts = updatedInvoices.reduce((sum, invoice) => {
+                return sum + (parseFloat(invoice.paymentInvoice) || 0);
+            }, 0);
+    
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                invoices: updatedInvoices,
+                paidAmount: sumPaidAmounts.toFixed(2),
+                lastPaidAmount: sumPaidAmounts.toFixed(2),
+                pendingAmount: updatedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.pendingAmount), 0).toFixed(2),
+            }));
+        } else {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                [id]: value,
+            }));
+        }
+    };
+    
+
+
+
+
     const { id } = useParams();
     useEffect(() => {
         const fetchData = async () => {
-            const idsArray = id.split(',');
             try {
-                const fetchedData = await Promise.all(idsArray.map(async (singleId) => {
-                    const res = await fetch(`/api/user/currentUserInvoice/${singleId}`);
-                    const data = await res.json();
-                    return data.data;
-                }));
-
-                const mergedData = fetchedData.reduce((acc, current) => {
-                    acc.customerName = current.customerName;
-                    acc.customerMobileNumber = current.customerMobileNumber;
-                    acc.invoiceNumber += `${current.invoiceNumber}, `;
-                    acc.totalAmount += parseFloat(current.totalAmount);
-                    acc.invoices.push({
-                        invoiceNumber: current.invoiceNumber,
-                        purchaseDate: current.purchaseDate,
-                        totalAmount: parseFloat(current.totalAmount),
-                        pendingAmount: parseFloat(current.totalAmount),
-                        paymentInvoice: ''
+                const res = await fetch(`/api/payment/currentUserReceipt/${id}`);
+                const data = await res.json();
+                if (data) {
+                    const user = data.data;
+                    setFormData({
+                        receiptNumber: user.receiptNumber,
+                        customerName: user.customerName,
+                        customerMobileNumber: user.customerMobileNumber,
+                        receiptDate: user.receiptDate,
+                        paidAmount: user.paidAmount,
+                        invoiceNumber: user.invoiceNumber,
+                        paymentype: user.paymentype,
+                        totalAmount: user.totalAmount,
+                        lastPaidAmount: user.lastPaidAmount,
+                        pendingAmount: user.pendingAmount,
+                        invoices: user.invoices || [],
                     });
-                    return acc;
-                }, {
-                    customerName: '',
-                    customerMobileNumber: '',
-                    invoiceNumber: '',
-                    totalAmount: 0,
-                    invoices: []
-                });
-
-                setInvoices(mergedData.invoices);
-
-                setFormData(prevFormData => ({
-                    ...prevFormData,
-                    ...mergedData,
-                    totalAmount: mergedData.totalAmount.toFixed(2),
-                    invoiceNumber: mergedData.invoiceNumber.slice(0, -2)
-                }));
+                    // setInvoicesArray(user.invoices)
+                }
             } catch (error) {
-                console.log(error, " fetching data error in update");
+                console.log(error, "fetching data error in update");
             }
         };
 
@@ -169,7 +207,6 @@ export default function Payment() {
 
     const handlePaymentSubmit = async (e) => {
         e.preventDefault();
-
 
         for (const invoice of formData.invoices) {
             if (parseFloat(invoice.paymentInvoice) > parseFloat(invoice.totalAmount)) {
@@ -187,8 +224,8 @@ export default function Payment() {
             lastPaidAmount: prevFormData.paidAmount
         }));
         try {
-            const res = await fetch('/api/payment/Receipt', {
-                method: "POST",
+            const res = await fetch(`/api/payment/paymentUpdate/${id}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -205,70 +242,150 @@ export default function Payment() {
         } catch (error) {
             console.log(error.message);
         }
-    }
+    };
 
+    // const handlePaymentSubmit = async (e) => {
+    //     e.preventDefault();
 
-    
+    //     const filledInvoices = formData.invoices.filter(invoice => invoice.paymentInvoice && invoice.paymentInvoice !== "");
+    //     // const dataDemo = formData.invoices.find(item => item.invoiceNumber === )
+
+    //     for (const invoice of filledInvoices) {
+    //         if (parseFloat(invoice.paymentInvoice) > parseFloat(invoice.pendingAmount)) {
+    //             toast.error(`Payment for invoice ${invoice.invoiceNumber} exceeds pending amount.`);
+    //             return;
+    //         }
+    //     } 
+
+    //     const sumPaidAmounts = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.paymentInvoice) || 0), 0);
+    //     const totalAmount = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.totalAmount) || 0), 0);
+    //     const pending = filledInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.pendingAmount) || 0), 0);
+    //     const pendingAmount = pending - sumPaidAmounts;
+
+    //     try {
+    //         const updatedInvoices = filledInvoices.map(invoice => {
+    //             const pendingAmount = invoice.pendingAmount - invoice.paymentInvoice;
+    //             return {
+    //                 ...invoice,
+    //                 pendingAmount: pendingAmount,
+    //             };
+    //         });
+
+    //         const updatedFormData = {
+    //             ...formData,
+    //             lastPaidAmount: sumPaidAmounts.toFixed(2),
+    //             pendingAmount: pendingAmount.toFixed(2),
+    //             totalAmount: totalAmount.toFixed(2),
+    //             invoices: updatedInvoices,
+    //         };
+
+    //         console.log(updatedFormData);
+
+    //         const res = await fetch(`/api/payment/paymentUpdate/${id}`, {
+    //             method: "PUT",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify(updatedFormData),
+    //         });
+
+    //         const data = await res.json();
+    //         if (data) {
+    //             setSuccessDialogOpen(true);
+    //         } else {
+    //             console.log(data.message);
+    //         }
+    //     } catch (error) {
+    //         console.error(error.message);
+    //     }
+    // };
+
     const handleDeleteInvoice = (indexToDelete) => {
         const newInvoices = formData.invoices.filter((_, index) => index !== indexToDelete);
-    
-        const newTotalAmount = newInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+
+        const newTotalAmount = newInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.totalAmount), 0);
         const newSumPaidAmounts = newInvoices.reduce((sum, invoice) => {
             return sum + (parseFloat(invoice.paymentInvoice) || 0);
         }, 0);
         const newPendingAmount = newTotalAmount - newSumPaidAmounts;
-    
+
         setFormData(prevFormData => ({
             ...prevFormData,
-            totalAmount: newTotalAmount,
-            paidAmount: newSumPaidAmounts,
-            lastPaidAmount: newSumPaidAmounts,
-            pendingAmount: newPendingAmount,
+            totalAmount: newTotalAmount.toFixed(2),
+            paidAmount: newSumPaidAmounts.toFixed(2),
+            lastPaidAmount: newSumPaidAmounts.toFixed(2),
+            pendingAmount: newPendingAmount.toFixed(2),
             invoices: newInvoices,
         }));
         setInvoices(newInvoices);
     };
-    
-
-
 
     const handleAddInvoices = () => {
-        const existingInvoices = formData.invoices.filter(invoice => invoice.paymentInvoice !== '');
         setInvoiceDialogOpen(true);
     };
 
     const handleInvoiceSelect = (selectedInvoices, totalAmount) => {
         const selectedInvoiceNumbers = selectedInvoices.map(invoice => invoice.invoiceNumber).join(", ");
-        const updatedInvoices = selectedInvoices.map(invoice => {
-            const existingInvoice = formData.invoices.find(existingInvoice => existingInvoice.invoiceNumber === invoice.invoiceNumber);
-            return {
-                ...invoice,
-                pendingAmount: existingInvoice ? existingInvoice.pendingAmount : invoice.totalAmount,
-                paymentInvoice: existingInvoice ? existingInvoice.paymentInvoice : ""
-            };
-        });
+        const updatedInvoices = selectedInvoices.map(invoice => ({
+            ...invoice,
+            pendingAmount: invoice.totalAmount,
+            paymentInvoice: ""
+        }));
         const newTotalAmount = updatedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.totalAmount), 0);
-    
-        const newSumPaidAmounts = updatedInvoices.reduce((sum, invoice) => {
-            return sum + (parseFloat(invoice.paymentInvoice) || 0);
-        }, 0);
-    
+
+        const mergedInvoices = [...formData.invoices, ...updatedInvoices];
+
         setFormData(prevFormData => ({
             ...prevFormData,
             invoiceNumber: selectedInvoiceNumbers,
-            invoices: updatedInvoices,
+            invoices: mergedInvoices,
             totalAmount: newTotalAmount.toFixed(2),
-            paidAmount: newSumPaidAmounts.toFixed(2), 
-            lastPaidAmount: "0.00", 
-            pendingAmount: newTotalAmount.toFixed(2),
+            paidAmount: "0.00",
+            lastPaidAmount: "0.00",
+            pendingAmount: mergedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.pendingAmount), 0).toFixed(2),
         }));
     };
-    
 
+    const handleAddOldInvoices = () => {
+        setShowPopUp(true);
+    };
 
+    const handleOldInvoiceSelect = (selectedInvoices, totalAmount) => {
+        console.log(selectedInvoices);
+        console.log(totalAmount);
+        const updatedSelectedInvoices = selectedInvoices.map(invoice => ({
+            ...invoice,
+            paymentInvoice: ""
+        }));
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            invoiceNumber: [...prevFormData.invoices.map(invoice => invoice.invoiceNumber), ...updatedSelectedInvoices.map(invoice => invoice.invoiceNumber)].join(", "),
+            invoices: [...prevFormData.invoices, ...updatedSelectedInvoices],
+        }));
+    };
 
+    // const handleOldInvoiceSelect = (selectedInvoices, totalAmount) => {
+    //     const updatedSelectedInvoices = selectedInvoices.map(invoice => ({
+    //         ...invoice,
+    //         paymentInvoice: "",
+    //         pendingAmount: parseFloat(invoice.totalAmount) - (parseFloat(invoice.paymentInvoice) || 0)
+    //     }));
 
+    //     const mergedInvoices = [...formData.invoices, ...updatedSelectedInvoices];
+    //     console.log(mergedInvoices);
 
+    //     setFormData(prevFormData => ({
+    //         ...prevFormData,
+    //         invoiceNumber: mergedInvoices.map(invoice => invoice.invoiceNumber).join(", "),
+    //         invoices: mergedInvoices,
+    //         totalAmount: mergedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.totalAmount), 0).toFixed(2),
+    //         paidAmount: mergedInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.paymentInvoice) || 0), 0).toFixed(2),
+    //         lastPaidAmount: mergedInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.paymentInvoice) || 0), 0).toFixed(2),
+    //         pendingAmount: mergedInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.pendingAmount), 0).toFixed(2),
+    //     }));
+    //     setInvoicesArray(mergedInvoices);
+    //     setShowPopUp(false);
+    // };
 
 
     return (
@@ -278,7 +395,7 @@ export default function Payment() {
             <form onSubmit={prevent}>
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <Input type='text' onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='receiptNumber' placeholder='Receipt Number' />
+                    <Input type='text' value={formData.receiptNumber} onChange={handleFetchData} className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500' id='receiptNumber' placeholder='Receipt Number' />
                 </div>
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
@@ -318,7 +435,7 @@ export default function Payment() {
                 </Link> */}
 
                 <div className='flex flex-col gap-4 flex-1 mt-5'>
-                    <button onClick={handleAddInvoices} className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add Invoices . . . </button>
+                    <button onClick={handleAddInvoices} className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95'>Add New Invoices . . . </button>
                 </div>
                 <PaymentAddInvoice
                     open={invoiceDialogOpen}
@@ -340,6 +457,7 @@ export default function Payment() {
                             value="cash"
                             className='w-5'
                             id='cash'
+                            checked={formData.paymentype === 'cash'}
                             onChange={handleFetchPaymentType}
                             name='accountstatus'
                         />
@@ -351,6 +469,7 @@ export default function Payment() {
                             value="bank"
                             className='w-5'
                             id='bank'
+                            checked={formData.paymentype === 'bank'}
                             onChange={handleFetchPaymentType}
                             name='accountstatus'
                         />
@@ -362,12 +481,16 @@ export default function Payment() {
                             value="online"
                             className='w-5'
                             id='online'
+                            checked={formData.paymentype === 'online'}
                             onChange={handleFetchPaymentType}
                             name='accountstatus'
                         />
                         <span className='text-slate-600'>Online</span>
                     </div>
                 </div>
+
+                <button type="button" className='p-3 mt-4 bg-slate-700  text-white rounded-lg uppercase hover:opacity-95' onClick={handleAddOldInvoices}>Add Old Invoices</button>
+
 
                 <div className="container mx-auto">
                     <table className="mt-5">
@@ -381,33 +504,39 @@ export default function Payment() {
                             </tr>
                         </thead>
                         <tbody>
-                            {formData.invoices.map((invoice, index) => (
-                                <tr key={invoice.invoiceNumber}> {/* Use a unique identifier as the key */}
-                                    <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
-                                    <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
-                                    <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
-                                    <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
-                                    <td className="border w-80 px-4 py-2 text-center">
-                                        <Input
-                                            type='text'
-                                            className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
-                                            id='paymentInvoice'
-                                            placeholder='Pay'
-                                            value={invoice.paymentInvoice}
-                                            onChange={(e) => handleFetchData(e, index)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <button
-                                            className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2"
-                                            onClick={() => handleDeleteInvoice(index)}
-                                        >
-                                            <MdDelete className='h-6 w-6' />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        }
+                            {formData.invoices.map((invoice, index) => {
+                                console.log(formData.invoices);
+                                return (
+                                    <tr key={index}>
+                                        <td className="border px-4 py-2 text-center">{invoice.invoiceNumber}</td>
+                                        <td className="border px-4 py-2 text-center">{invoice.purchaseDate}</td>
+                                        <td className="border font-semibold px-4 py-2 text-center">{invoice.totalAmount}</td>
+                                        <td className="border text-red-600 font-semibold px-4 py-2 text-center">{invoice.pendingAmount}</td>
+                                        <td className="border w-80 px-4 py-2 text-center">
+                                            <Input
+                                                type='text'
+                                                className='p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500'
+                                                id='paymentInvoice'
+                                                placeholder='Pay'
+                                                value={invoice.paymentInvoice}
+                                                onBlur={(e) => handleFetchData(e, index)} 
+                                                onChange={(e) => {
+                                                    handleFetchBlurData(e, index); 
+                                                }}
+                                            />
+
+                                        </td>
+                                        <td>
+                                            <button
+                                                className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2"
+                                                onClick={() => handleDeleteInvoice(index)}
+                                            >
+                                                <MdDelete className='h-6 w-6' />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -446,6 +575,12 @@ export default function Payment() {
                     <Button onClick={successpop}>Close</Button>
                 </DialogActions>
             </Dialog>
+            <PaymentPopUp
+                open={showPopUp}
+                onClose={() => setShowPopUp(false)}
+                existingInvoices={formData.invoices}
+                onSelectInvoices={handleOldInvoiceSelect}
+            />
 
             <ToastContainer />
         </div>

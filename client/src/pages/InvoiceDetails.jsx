@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
+import { MdDelete } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
 
 export default function InvoiceDetails() {
     const [users, setUsers] = useState([]);
@@ -8,6 +10,11 @@ export default function InvoiceDetails() {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [selectedCustomerName, setSelectedCustomerName] = useState(null);
+
+    const [payment, setPayment] = useState([]);
+    const [productName, setProductName] = useState([]);
+    const [productUsers, setProductUsers] = useState([]);
+    const [paymentSums, setPaymentSums] = useState({});
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -25,14 +32,40 @@ export default function InvoiceDetails() {
         fetchUsers();
     }, []);
 
-    const [productName, setProductName] = useState([]);
-    const [productUsers, setProductUsers] = useState([]);
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchPaymentDetails = async () => {
+            try {
+                const response = await fetch('/api/payment/details');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch payment details');
+                }
+                const data = await response.json();
+                setPayment(data.data);
+
+                const paymentSums = data.data.reduce((acc, paymentDetail) => {
+                    paymentDetail.invoices.forEach(invoice => {
+                        if (!acc[invoice.invoiceNumber]) {
+                            acc[invoice.invoiceNumber] = { paidAmount: 0 };
+                        }
+                        acc[invoice.invoiceNumber].paidAmount += +(invoice.paymentInvoice);
+                    });
+                    return acc;
+                }, {});
+
+                setPaymentSums(paymentSums);
+            } catch (error) {
+                console.error('Error fetching payment details:', error);
+            }
+        };
+        fetchPaymentDetails();
+    }, []);
+
+    useEffect(() => {
+        const fetchProductDetails = async () => {
             try {
                 const response = await fetch('/api/product/details');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch users');
+                    throw new Error('Failed to fetch products');
                 }
                 const data = await response.json();
                 const activeProductNames = data.data.map(product => product.productsName);
@@ -40,12 +73,12 @@ export default function InvoiceDetails() {
                 setProductName(activeProductNames);
                 setProductUsers(data.data);
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('Error fetching products:', error);
             }
         };
-        fetchUsers();
+        fetchProductDetails();
     }, []);
-    
+
     const handleCheckboxChange = (id, customerName) => {
         setSelectedIds((prev) => {
             if (prev.includes(id)) {
@@ -110,6 +143,10 @@ export default function InvoiceDetails() {
         setDeleteId(null);
     };
 
+    const getPaymentDetails = (invoiceNumber) => {
+        return paymentSums[invoiceNumber] || { paidAmount: 0};
+    };
+
     return (
         <div className="container mx-auto">
             <div className='flex gap-4 flex-1 mt-5'>
@@ -130,7 +167,7 @@ export default function InvoiceDetails() {
                 </div>
             </div>
 
-            <table className="table-auto max-w-lg mx-auto mt-5">
+            <table className="table-auto max-w-4xl mx-auto mt-5">
                 <thead>
                     <tr>
                         <th></th>
@@ -146,54 +183,61 @@ export default function InvoiceDetails() {
                         <th className="border px-4 py-2">Discount Amount</th>
                         <th className="border px-4 py-2">Total Discount</th>
                         <th className="border px-4 py-2">Total Amount</th>
+                        <th className="border px-4 py-2">Paid Amount</th>
+                        <th className="border px-4 py-2">Pending Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                     {users.map((user) => (
-                        user.items.map((item, index) => (
-                            <tr key={`${user._id}-${index}`}>
-                                {index === 0 && (
-                                    <>
-                                        <td>
-                                            {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
-                                                <input
-                                                    type='checkbox'
-                                                    id='select'
-                                                    className='w-5 mx-5'
-                                                    checked={selectedIds.includes(user._id)}
-                                                    onChange={() => handleCheckboxChange(user._id, user.customerName)}
-                                                />
-                                            ) : null}
-                                        </td>
+                        user.items.map((item, index) => {
+                            const { paidAmount } = getPaymentDetails(user.invoiceNumber);
+                            return (
+                                <tr key={`${user._id}-${index}`}>
+                                    {index === 0 && (
+                                        <>
+                                            <td>
+                                                {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
+                                                    <input
+                                                        type='checkbox'
+                                                        id='select'
+                                                        className='w-4 h-4 mx-5'
+                                                        checked={selectedIds.includes(user._id)}
+                                                        onChange={() => handleCheckboxChange(user._id, user.customerName)}
+                                                    />
+                                                ) : null}
+                                            </td>
 
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td>
-                                    </>
-                                )}
-                                <td className="border text-center px-4 py-2">{item.productname}</td>
-                                <td className="border text-center px-4 py-2">{item.qty}</td>
-                                <td className="border text-center px-4 py-2">{item.rate}</td>
-                                <td className="border text-center px-4 py-2">{item.amount}</td>
-                                <td className="border text-center px-4 py-2">{item.discountper}</td>
-                                <td className="border text-center px-4 py-2">{item.discountamount}</td>
-                                {index === 0 && (
-                                    <>
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalDiscount}</td>
-                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalAmount}</td>
-                                        <td>
-                                            <Link to={`/updateInvoice/${user._id}`}>
-                                                <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
-                                            </Link>
-                                        </td>
-                                        <td>
-                                            <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
-                                        </td>
-                                    </>
-                                )}
-                            </tr>
-                        ))
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td>
+                                        </>
+                                    )}
+                                    <td className="border text-center px-4 py-2">{item.productname}</td>
+                                    <td className="border text-center px-4 py-2">{item.qty}</td>
+                                    <td className="border text-center px-4 py-2">{item.rate}</td>
+                                    <td className="border text-center px-4 py-2">{item.amount}</td>
+                                    <td className="border text-center px-4 py-2">{item.discountper}</td>
+                                    <td className="border text-center px-4 py-2">{item.discountamount}</td>
+                                    {index === 0 && (
+                                        <>
+                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalDiscount}</td>
+                                            <td className="border text-center font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount}</td>
+                                            <td className="border text-center text-green-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{paidAmount}</td>
+                                            <td className="border text-center text-red-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount - paidAmount}</td>
+                                            <td>
+                                                <Link to={`/updateInvoice/${user._id}`}>
+                                                    <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl pl-6 px-3 py-2"><FaEdit className='h-6 w-6' /></button>
+                                                </Link>
+                                            </td>
+                                            <td>
+                                                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-3 py-2"><MdDelete className='h-6 w-6' /></button>
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            );
+                        })
                     ))}
                 </tbody>
             </table>

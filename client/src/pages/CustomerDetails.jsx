@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
+import { MdDelete } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
 
 export default function CustomerDetails() {
     const [users, setUsers] = useState([]);
@@ -77,11 +79,11 @@ export default function CustomerDetails() {
                             <td className="border text-center px-4 py-2">{user.accountStatus}</td>
                             <td>
                                 <Link to={`/updateCustomer/${user._id}`}>
-                                <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
+                                <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl pl-6 px-3 py-2"><FaEdit className='h-6 w-6' /></button>
                                 </Link>
                             </td>
                             <td>
-                                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-3 py-2"><MdDelete className='h-6 w-6' /></button>
                             </td>
                         </tr>
                     ))}

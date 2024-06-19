@@ -7,6 +7,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from 'date-fns';
+import { MdDelete } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
+
+
 
 export default function Invoice() {
     const [formData, setFormData] = useState({
@@ -459,10 +463,10 @@ export default function Invoice() {
                                     <td className="border px-4 py-2">{item.discountamount}</td>
                                     <td className="border px-4 py-2">{item.amount}</td>
                                     <td>
-                                        <button onClick={() => handleUpdate(index)} className="text-green-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Update</button>
+                                        <button onClick={() => handleUpdate(index)} className="text-green-600 uppercase hover:opacity-95 rounded-3xl pl-3 px-2 py-2"><FaEdit className='h-6 w-6' /></button>
                                     </td>
                                     <td>
-                                        <button onClick={() => handleDelete(index)} className="text-red-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2">Delete</button>
+                                        <button onClick={() => handleDelete(index)} className="text-red-600 uppercase hover:opacity-95 rounded-3xl px-2 py-2"><MdDelete className='h-6 w-6' /></button>
                                     </td>
                                 </tr>
                             ))}
