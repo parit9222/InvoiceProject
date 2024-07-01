@@ -16,6 +16,11 @@ import UpdatePayment from './pages/UpdatePayment.jsx';
 import PaymentAddInvoice from './pages/PaymentAddInvoice.jsx';
 import PaymentUpdate from './pages/PaymentUpdate.jsx';
 import Report from './pages/Report.jsx';
+import Stock from './pages/Stock.jsx';
+import StockDetails from './pages/StockDetails.jsx';
+import UpdateStock from './pages/UpdateStock.jsx';
+import DetailStock from './pages/DetailStock.jsx';
+import StockReport from './pages/StockReport.jsx';
 
 export default function App() {
 
@@ -43,6 +48,12 @@ export default function App() {
         <Route path="/addNewInvoice/:customerName/:invoiceNumber" element={<PaymentAddInvoice />} />
 
         <Route path="/report" element={<Report />} />
+
+        <Route path="/stock" element={<Stock />} />
+        <Route path="/stockDetails" element={<StockDetails />} />
+        <Route path="/updateStock/:id" element={<UpdateStock />} />
+        <Route path="/detailStock" element={<DetailStock />} />
+        <Route path="/stockReport" element={<StockReport />} />
 
       </Routes>
     </BrowserRouter>

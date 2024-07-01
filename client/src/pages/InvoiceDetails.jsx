@@ -144,7 +144,7 @@ export default function InvoiceDetails() {
     };
 
     const getPaymentDetails = (invoiceNumber) => {
-        return paymentSums[invoiceNumber] || { paidAmount: 0};
+        return paymentSums[invoiceNumber] || { paidAmount: 0 };
     };
 
     return (
@@ -188,57 +188,54 @@ export default function InvoiceDetails() {
                     </tr>
                 </thead>
                 <tbody>
-                    {users.map((user) => (
-                        user.items.map((item, index) => {
-                            const { paidAmount } = getPaymentDetails(user.invoiceNumber);
-                            return (
-                                <tr key={`${user._id}-${index}`}>
-                                    {index === 0 && (
-                                        <>
-                                            <td>
-                                                {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
-                                                    <input
-                                                        type='checkbox'
-                                                        id='select'
-                                                        className='w-4 h-4 mx-5'
-                                                        checked={selectedIds.includes(user._id)}
-                                                        onChange={() => handleCheckboxChange(user._id, user.customerName)}
-                                                    />
-                                                ) : null}
-                                            </td>
-
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td>
-                                        </>
-                                    )}
-                                    <td className="border text-center px-4 py-2">{item.productname}</td>
-                                    <td className="border text-center px-4 py-2">{item.qty}</td>
-                                    <td className="border text-center px-4 py-2">{item.rate}</td>
-                                    <td className="border text-center px-4 py-2">{item.amount}</td>
-                                    <td className="border text-center px-4 py-2">{item.discountper}</td>
-                                    <td className="border text-center px-4 py-2">{item.discountamount}</td>
-                                    {index === 0 && (
-                                        <>
-                                            <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalDiscount}</td>
-                                            <td className="border text-center font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount}</td>
-                                            <td className="border text-center text-green-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{paidAmount}</td>
-                                            <td className="border text-center text-red-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount - paidAmount}</td>
-                                            <td>
-                                                <Link to={`/updateInvoice/${user._id}`}>
-                                                    <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl pl-6 px-3 py-2"><FaEdit className='h-6 w-6' /></button>
-                                                </Link>
-                                            </td>
-                                            <td>
-                                                <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-3 py-2"><MdDelete className='h-6 w-6' /></button>
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            );
-                        })
-                    ))}
+                    {users.map((user) => {
+                        const { paidAmount } = getPaymentDetails(user.invoiceNumber);
+                        return user.items.map((item, index) => (
+                            <tr key={`${user._id}-${index}`}>
+                                {index === 0 && (
+                                    <>
+                                        <td rowSpan={user.items.length}>
+                                            {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
+                                                <input
+                                                    type='checkbox'
+                                                    id='select'
+                                                    className='w-4 h-4 mx-5'
+                                                    checked={selectedIds.includes(user._id)}
+                                                    onChange={() => handleCheckboxChange(user._id, user.customerName)}
+                                                />
+                                            ) : null}
+                                        </td>
+                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
+                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
+                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>
+                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.purchaseDate}</td>
+                                    </>
+                                )}
+                                <td className="border text-center px-4 py-2">{item.productname}</td>
+                                <td className="border text-center px-4 py-2">{item.qty}</td>
+                                <td className="border text-center px-4 py-2">{item.rate}</td>
+                                <td className="border text-center px-4 py-2">{item.amount}</td>
+                                <td className="border text-center px-4 py-2">{item.discountper}</td>
+                                <td className="border text-center px-4 py-2">{item.discountamount}</td>
+                                {index === 0 && (
+                                    <>
+                                        <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.totalDiscount}</td>
+                                        <td className="border text-center font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount}</td>
+                                        <td className="border text-center text-green-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{paidAmount}</td>
+                                        <td className="border text-center text-red-600 font-semibold px-4 py-2" rowSpan={user.items.length}>{user.totalAmount - paidAmount}</td>
+                                        <td rowSpan={user.items.length}>
+                                            <Link to={`/updateInvoice/${user._id}`}>
+                                                <button className="text-green-600 font-semibold uppercase hover:opacity-95 rounded-3xl pl-6 px-3 py-2"><FaEdit className='h-6 w-6' /></button>
+                                            </Link>
+                                        </td>
+                                        <td rowSpan={user.items.length}>
+                                            <button onClick={() => handleDeleteData(user._id)} className="text-red-600 font-semibold uppercase hover:opacity-95 rounded-3xl px-3 py-2"><MdDelete className='h-6 w-6' /></button>
+                                        </td>
+                                    </>
+                                )}
+                            </tr>
+                        ));
+                    })}
                 </tbody>
             </table>
 

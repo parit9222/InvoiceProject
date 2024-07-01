@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 
 export default function AddPaymentPopup({ handleClosePopup }) {
     const [users, setUsers] = useState([]);
@@ -26,11 +25,11 @@ export default function AddPaymentPopup({ handleClosePopup }) {
     const [productName, setProductName] = useState([]);
     const [productUsers, setProductUsers] = useState([]);
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchProductDetails = async () => {
             try {
                 const response = await fetch('/api/product/details');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch users');
+                    throw new Error('Failed to fetch products');
                 }
                 const data = await response.json();
                 const activeProductNames = data.data.map(product => product.productsName);
@@ -39,11 +38,11 @@ export default function AddPaymentPopup({ handleClosePopup }) {
                 setProductUsers(data.data);
 
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('Error fetching products:', error);
             }
         };
 
-        fetchUsers();
+        fetchProductDetails();
     }, []);
 
     const handleCheckboxChange = (id, customerName) => {
@@ -98,7 +97,7 @@ export default function AddPaymentPopup({ handleClosePopup }) {
                                 <tr key={`${user._id}-${index}`}>
                                     {index === 0 && (
                                         <>
-                                            <td>
+                                            <td rowSpan={user.items.length}>
                                                 {selectedCustomerName === null || selectedCustomerName === user.customerName ? (
                                                     <input
                                                         type='checkbox'
@@ -109,7 +108,6 @@ export default function AddPaymentPopup({ handleClosePopup }) {
                                                     />
                                                 ) : null}
                                             </td>
-
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.invoiceNumber}</td>
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerName}</td>
                                             <td className="border text-center px-4 py-2" rowSpan={user.items.length}>{user.customerMobileNumber}</td>

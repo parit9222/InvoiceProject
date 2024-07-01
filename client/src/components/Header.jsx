@@ -24,8 +24,17 @@ export default function Header() {
                         </Link>
 
                         <Link to='/report'>
-                            <li className='hidden sm:inline text-slate-700 hover:underline'>Report</li>
+                            <li className='hidden sm:inline text-slate-700 hover:underline'>Payments Report</li>
                         </Link>
+
+                        <Link to='/stockDetails'>
+                            <li className='hidden sm:inline text-slate-700 hover:underline'>Stock</li>
+                        </Link>
+                        
+                        <Link to={'/stockReport'}>
+                            <li className='hidden sm:inline text-slate-700 hover:underline'>Stocks Report</li>
+                        </Link>
+
                     </ul>
                 </div>
             </header>
