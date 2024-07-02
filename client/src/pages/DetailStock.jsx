@@ -43,25 +43,25 @@ export default function DetailStock() {
         fetchProducts();
     }, []);
 
-    // useEffect(() => {
-    //     const fetchProductDetails = async () => {
-    //         if (!selectedProductName) return;
+    useEffect(() => {
+        const fetchProductDetails = async () => {
+            if (!selectedProductName) return;
 
-    //         try {
-    //             const response = await fetch(`/api/product/details?productName=${encodeURIComponent(selectedProductName)}`);
-    //             if (!response.ok) {
-    //                 throw new Error('Failed to fetch product details');
-    //             }
-    //             const data = await response.json();
-    //             const activeProductDetails = data.data;
+            try {
+                const response = await fetch(`/api/product/details?productName=${encodeURIComponent(selectedProductName)}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product details');
+                }
+                const data = await response.json();
+                const activeProductDetails = data.data;
 
-    //             setGroupedData({});
-    //         } catch (error) {
-    //             console.error('Error fetching product details:', error);
-    //         }
-    //     };
-    //     fetchProductDetails();
-    // }, [selectedProductName]);
+                setGroupedData({});
+            } catch (error) {
+                console.error('Error fetching product details:', error);
+            }
+        };
+        fetchProductDetails();
+    }, [selectedProductName]);
 
     useEffect(() => {
         const updatedCombinedData = [
