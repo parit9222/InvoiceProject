@@ -7,7 +7,7 @@ export default function DetailStock() {
     const [combinedData, setCombinedData] = useState([]);
     const [groupedData, setGroupedData] = useState({});
     const [filterProductName, setFilterProductName] = useState('');
-    const [selectedProductName, setSelectedProductName] = useState(''); 
+    const [selectedProductName, setSelectedProductName] = useState('');
 
     const location = useLocation();
 
@@ -43,25 +43,25 @@ export default function DetailStock() {
         fetchProducts();
     }, []);
 
-    useEffect(() => {
-        const fetchProductDetails = async () => {
-            if (!selectedProductName) return; 
+    // useEffect(() => {
+    //     const fetchProductDetails = async () => {
+    //         if (!selectedProductName) return;
 
-            try {
-                const response = await fetch(`/api/product/details?productName=${encodeURIComponent(selectedProductName)}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch product details');
-                }
-                const data = await response.json();
-                const activeProductDetails = data.data;
+    //         try {
+    //             const response = await fetch(`/api/product/details?productName=${encodeURIComponent(selectedProductName)}`);
+    //             if (!response.ok) {
+    //                 throw new Error('Failed to fetch product details');
+    //             }
+    //             const data = await response.json();
+    //             const activeProductDetails = data.data;
 
-                setGroupedData({});
-            } catch (error) {
-                console.error('Error fetching product details:', error);
-            }
-        };
-        fetchProductDetails();
-    }, [selectedProductName]);
+    //             setGroupedData({});
+    //         } catch (error) {
+    //             console.error('Error fetching product details:', error);
+    //         }
+    //     };
+    //     fetchProductDetails();
+    // }, [selectedProductName]);
 
     useEffect(() => {
         const updatedCombinedData = [
@@ -75,7 +75,9 @@ export default function DetailStock() {
                 customerName: user.customerName,
                 customerMobileNumber: user.customerMobileNumber,
                 purchaseRate: "",
-                purchaseAmount: "" 
+                purchaseAmount: "",
+                sellRate: item.rate, 
+                sellAmount: item.amount 
             }))),
             ...stock.map(stockItem => ({
                 productName: stockItem.productsName,
@@ -87,16 +89,13 @@ export default function DetailStock() {
                 customerName: "",
                 customerMobileNumber: "",
                 purchaseRate: stockItem.rate,
-                purchaseAmount: "" 
+                purchaseAmount: stockItem.qty * stockItem.rate,
+                sellRate: "", 
+                sellAmount: "" 
             }))
         ];
 
-        const updatedCombinedDataWithAmount = updatedCombinedData.map(item => ({
-            ...item,
-            purchaseAmount: item.purchaseQty * item.purchaseRate 
-        }));
-
-        updatedCombinedDataWithAmount.sort((a, b) => {
+        updatedCombinedData.sort((a, b) => {
             const dateA = new Date(
                 a.date.split('-').reverse().join('-')
             );
@@ -106,11 +105,12 @@ export default function DetailStock() {
             return dateA - dateB;
         });
 
-        setCombinedData(updatedCombinedDataWithAmount);
+        setCombinedData(updatedCombinedData);
     }, [users, stock]);
 
+
     useEffect(() => {
-        if (combinedData.length === 0) return; 
+        if (combinedData.length === 0) return;
 
         const groupedAndTotalledData = combinedData.reduce((groups, item) => {
             const groupName = item.productName;
@@ -122,8 +122,10 @@ export default function DetailStock() {
                         sellQty: 0,
                         purchaseRate: 0,
                         purchaseAmount: 0,
-                        balanceQty: 0, 
-                        balanceAmount: 0
+                        balanceQty: 0,
+                        balanceAmount: 0,
+                        sellRate: 0,
+                        sellAmount: 0
                     }
                 };
             }
@@ -132,6 +134,8 @@ export default function DetailStock() {
             groups[groupName].totals.sellQty += Number(item.sellQty);
             groups[groupName].totals.purchaseRate += Number(item.purchaseRate);
             groups[groupName].totals.purchaseAmount += Number(item.purchaseAmount);
+            groups[groupName].totals.sellRate += Number(item.sellRate);
+            groups[groupName].totals.sellAmount += Number(item.sellAmount);
             return groups;
         }, {});
 
@@ -144,10 +148,10 @@ export default function DetailStock() {
                     currentBalance -= Number(item.sellQty);
                 }
                 item.balanceQty = currentBalance;
-                item.balanceAmount = (item.purchaseAmount / item.purchaseQty) * item.balanceQty; 
+                item.balanceAmount = (item.purchaseAmount / item.purchaseQty) * item.balanceQty;
             });
             groupedAndTotalledData[productName].totals.balanceQty = currentBalance;
-            groupedAndTotalledData[productName].totals.balanceAmount = (groupedAndTotalledData[productName].totals.purchaseAmount / groupedAndTotalledData[productName].totals.purchaseQty) * currentBalance; 
+            groupedAndTotalledData[productName].totals.balanceAmount = (groupedAndTotalledData[productName].totals.purchaseAmount / groupedAndTotalledData[productName].totals.purchaseQty) * currentBalance;
         });
 
         setGroupedData(groupedAndTotalledData);
@@ -201,6 +205,8 @@ export default function DetailStock() {
                                 <th className="border px-4 py-2">Invoice Number</th>
                                 <th className="border px-4 py-2">Customer/Vendor Name</th>
                                 <th className="border px-4 py-2">Mobile Number</th>
+                                <th className="border px-4 py-2">Sell Rate</th>
+                                <th className="border px-4 py-2">Sell Amount</th>
                                 <th className="border px-4 py-2">Purchase Rate</th>
                                 <th className="border px-4 py-2">Purchase Amount</th>
                                 <th className="border px-4 py-2">Balance Amount</th>
@@ -216,6 +222,8 @@ export default function DetailStock() {
                                     <td className="border text-center px-4 py-2">{item.invoiceNumber}</td>
                                     <td className="border text-center px-4 py-2">{item.customerName}</td>
                                     <td className="border text-center px-4 py-2">{item.customerMobileNumber}</td>
+                                    <td className="border text-center px-4 py-2">{item.sellRate}</td>
+                                    <td className="border text-center px-4 py-2">{item.sellAmount}</td>
                                     <td className="border text-center px-4 py-2">{item.purchaseRate}</td>
                                     <td className="border text-center px-4 py-2">{item.purchaseAmount}</td>
                                     <td className="border text-center px-4 py-2"></td>
@@ -227,7 +235,9 @@ export default function DetailStock() {
                                 <td className="border px-4 py-2">{filteredGroupedData[productName].totals.sellQty}</td>
                                 <td className="border px-4 py-2">{filteredGroupedData[productName].totals.balanceQty}</td>
                                 <td className="border px-4 py-2" colSpan={3}></td>
-                                <td className="border px-4 py-2">{filteredGroupedData[productName].totals.purchaseRate}</td>
+                                <td className="border px-4 py-2"></td>
+                                <td className="border px-4 py-2">{filteredGroupedData[productName].totals.sellAmount}</td>
+                                <td className="border px-4 py-2"></td>
                                 <td className="border px-4 py-2">{filteredGroupedData[productName].totals.purchaseAmount}</td>
                                 <td className="border px-4 py-2">{filteredGroupedData[productName].totals.balanceAmount.toFixed(2)}</td>
                             </tr>
