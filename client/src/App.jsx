@@ -21,6 +21,7 @@ import StockDetails from './pages/StockDetails.jsx';
 import UpdateStock from './pages/UpdateStock.jsx';
 import DetailStock from './pages/DetailStock.jsx';
 import StockReport from './pages/StockReport.jsx';
+import GeneratePdf from './pages/GeneratePdf.jsx';
 
 export default function App() {
 
@@ -54,6 +55,8 @@ export default function App() {
         <Route path="/updateStock/:id" element={<UpdateStock />} />
         <Route path="/detailStock" element={<DetailStock />} />
         <Route path="/stockReport" element={<StockReport />} />
+        
+        <Route path="/generate-pdf" element={<GeneratePdf />} />
 
       </Routes>
     </BrowserRouter>

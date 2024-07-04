@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; 
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
 import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
@@ -15,6 +15,8 @@ export default function InvoiceDetails() {
     const [productName, setProductName] = useState([]);
     const [productUsers, setProductUsers] = useState([]);
     const [paymentSums, setPaymentSums] = useState({});
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -147,6 +149,18 @@ export default function InvoiceDetails() {
         return paymentSums[invoiceNumber] || { paidAmount: 0 };
     };
 
+    const handleGeneratePdf = () => {
+        const selectedUsersWithPayment = users
+            .filter(user => selectedIds.includes(user._id))
+            .map(user => ({
+                ...user,
+                paidAmount: getPaymentDetails(user.invoiceNumber).paidAmount
+            }));
+        navigate('/generate-pdf', { state: { selectedUsers: selectedUsersWithPayment } });
+    };
+    
+    
+
     return (
         <div className="container mx-auto">
             <div className='flex gap-4 flex-1 mt-5'>
@@ -164,6 +178,15 @@ export default function InvoiceDetails() {
                             Payment
                         </button>
                     </Link>
+                </div>
+                <div className='flex gap-6 mt-5'>
+                    <button
+                        className="p-3 px-6 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95"
+                        disabled={selectedIds.length === 0}
+                        onClick={handleGeneratePdf}
+                    >
+                        Generate PDF
+                    </button>
                 </div>
             </div>
 
@@ -256,3 +279,5 @@ export default function InvoiceDetails() {
         </div>
     );
 }
+
+
